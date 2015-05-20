@@ -1,0 +1,15 @@
+{GiftCardDesc}
+
+Bonjour {firstname} {lastname} , 
+
+Veuillez trouver ci-dessous votre carte cadeau offerte par {from}
+  
+{GiftCardConditions}
+
+{GiftCardDatas}
+
+Code: {GiftCardCode} 
+Cette Carte-Cadeau d'une valeur de {GiftCardValue}{GiftCardTax}  est utilisable exclusivement sur le site {shop_name}.
+{GiftCardDate}.
+
+{shop_name} - {shop_url}

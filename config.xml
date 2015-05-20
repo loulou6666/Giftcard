@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+        <module>
+            <name>giftcard</name>
+            <displayName><![CDATA[GiftCard]]></displayName>
+            <version><![CDATA[3.2.1]]></version>
+            <description><![CDATA[Create GiftCard Product]]></description>
+            <author><![CDATA[Loulou66 and Eolia]]></author>
+            <tab><![CDATA[front_office_features]]></tab>
+	<confirmUninstall><![CDATA[WARNING: if you have some products created by this Gift Card module, you must delete them first.]]></confirmUninstall>
+            <is_configurable>1</is_configurable>
+            <need_instance>0</need_instance>
+	<limited_countries></limited_countries>
+        </module>

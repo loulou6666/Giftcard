@@ -1,0 +1,15 @@
+{GiftCardDesc}
+
+Hello {firstname} {lastname} , 
+
+Please find below your gift card offered by {from}
+  
+{GiftCardConditions}
+
+{GiftCardDatas}
+
+Code: {GiftCardCode} 
+This Gift Card worth {GifCardCurrency}{GiftCardValue} is used exclusively on the website {shop_name}. 
+{GiftCardDate}.
+
+{shop_name} - {shop_url}

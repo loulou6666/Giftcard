@@ -1,0 +1,16 @@
+{GiftCardDesc}
+
+Bonjour {firstname} {lastname} , 
+
+Merci d'avoir passé commande chez {shop_name} ! 
+  
+Suite à votre achat sur notre boutique, voici la carte Cadeau d'une valeur de {GiftCardValue}{GifCardCurrency} que vous avez commandé. 
+{GiftCardConditions}
+
+{GiftCardDatas}
+
+Code: {GiftCardCode} 
+Cette Carte-Cadeau d'une valeur de {GiftCardValue}{GiftCardTax}  est utilisable exclusivement sur le site {shop_name}.
+{GiftCardDate}.
+
+{shop_name} - {shop_url}

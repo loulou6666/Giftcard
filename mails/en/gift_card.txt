@@ -1,0 +1,16 @@
+{GiftCardDesc}
+
+Hello {firstname} {lastname} , 
+
+Thank you for placing your order with {shop_name} ! 
+  
+Following your purchase from our store, here's a gift card worth {GiftCardValue}{GiftCardTax} you order. 
+{GiftCardConditions}
+
+{GiftCardDatas}
+
+Code: {GiftCardCode} 
+This Gift Card worth {GifCardCurrency}{GiftCardValue} is used exclusively on the website {shop_name}. 
+{GiftCardDate}.
+
+{shop_name} - {shop_url}

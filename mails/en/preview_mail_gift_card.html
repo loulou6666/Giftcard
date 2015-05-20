@@ -1,0 +1,63 @@
+	<table style="width:100%;margin-top:10px;">
+		<tr>
+			<td align="center" style="padding:7px 0">
+				<table bgcolor="#ffffff" style="width:100%">
+					<tr>
+						<td align="center" style="border-bottom:4px solid #333333;padding:7px 0"><a title="{shop_name}" href="{shop_url}" style="color:#337ff1"><img src="{shop_logo}" alt="{shop_name}" /></a></td>
+					</tr>
+					<tr>
+						<td align="center" style="padding:7px 0"><span class="title" style="font-weight:500;font-size:28px;text-transform:uppercase;line-height:33px">Hello {firstname} {lastname},</span><br	/></td>
+					</tr>
+					<tr>
+						<td style="padding:0!important"><span style="font-weight:500;font-size:16px;text-transform:uppercase;line-height:25px;text-align:left;padding-left: 15px;">Following your purchase from our store, here is the {GiftCardName} of your order.</span></td>
+					</tr>
+					<tr>
+						<td style="padding:0!important">&nbsp;</td>
+					</tr>
+					<tr>
+						<table  style="width:915px">
+							<tr>
+								<td valign="top" height="20" align="right"><img src="{GiftCardBackground}"></td>
+							</tr>
+						</table>
+						<table style="width:908px">
+							<tr>
+								<td style="border: 1px dashed rgb(0, 0, 0); border-collapse: collapse; border-radius: 20px; padding:3px 3px;">
+									<table>
+										<tr>
+											<td style="position: relative; width: 450px;background: none repeat scroll 0% 0% rgb(204, 204, 204); height: 275px !important; border: 1px solid black; border-radius: 20px 0px 0px 20px;">
+												<table style="padding-left: 10px; padding-right: 10px;">
+												<tr style="height:185px !important; font-family: Verdana,sans-serif;font-size: 11px;">													
+													<td style="padding-top: 10px;">{GiftCardDatas}</td>														
+												</tr>
+												<tr>
+													<td style="background: none repeat scroll 0% 0% black; display: block;"><span style="font-weight: bold; font-size: 12px; color: white;">Code : </span><span style="font-weight: bold; font-size: 15px; color: white;">{GiftCardCode}</span></td>
+												</tr>
+												<tr>
+													<td style="font-style: italic;">This Gift Card worth{GiftCardValue}{GiftCardTax} be used exclusively on the site <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
+												</tr>
+												<tr>
+													<td style="font-style: italic;">Available until {GiftCardDate}.</td>
+												</tr>
+												</table>
+											</td>									
+											<td style="width: 450px; float: left; height: 275px !important; border: 1px solid black; border-radius: 0px 20px 20px 0px;"><img src="{GiftCardImage}" style="border-radius: 0px 20px 20px 0px;"></td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+							<tr>
+								<td align="left">You can access the status of your order and download your invoice in <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{history_url}">"Order History"</a> Heading <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{my_account_url}">"My account"</a> on our site.</td>
+							</tr>
+							<tr>
+								<td align="left">If you have a guest account, you can track your order in the section <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{guest_tracking_url}">"guest followed"</a> of our site.</td>
+							</tr>
+							<tr>
+								<td style="font-size: 10px; border-top: 1px solid #D9DADE;" align="center"><a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
+							</tr>
+						</table>
+					</tr>
+				</table>
+			</td>								
+		</tr>
+	</table>
