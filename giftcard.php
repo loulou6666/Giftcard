@@ -17,7 +17,7 @@ class giftcard extends Module {
 
         $this->name = 'giftcard';
         $this->tab = 'front_office_features';
-        $this->version = '3.2.1';
+        $this->version = '3.2.2';
         $this->author = 'Loulou66 and Eolia';
         $this->need_instance = 0;
         $this->_path = dirname(__FILE__);
@@ -403,7 +403,7 @@ class giftcard extends Module {
     }
 
     public function generateImage($id_product, $id_image, $image_path, $value, $display_code, $pos_code_x, $pos_code_y, $colorcode, $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow) {
-
+        
         $image = new Image($id_image);
         $tmpName = tempnam(_PS_TMP_IMG_DIR_, 'PS');
         $codecolor = $this->hex2rgb($colorcode);
@@ -432,10 +432,10 @@ class giftcard extends Module {
         imagepng($imageView, $tmpName);
         imagedestroy($imageView);
         
-        $new_path = $image->getPathForCreation();
+        $new_path = $image->getPathForCreation();        
         $imagesTypes = ImageType::getImagesTypes('products');
         ImageManager::resize($tmpName, $new_path . '.jpg', null, null, 'jpg', false);
-
+       
         foreach ($imagesTypes as $k => $image_type) {
             if (!ImageManager::resize($tmpName, $new_path . '-' . stripslashes($image_type['name']) . '.' . $image->image_format, $image_type['width'], $image_type['height'], $image->image_format))
                 return $this->errors[] = Tools::displayError('An error occurred while copying this image:') . ' ' . stripslashes($image_type['name']);
@@ -1035,11 +1035,12 @@ class giftcard extends Module {
 
         $result = array();
         $ids_card = Db::getInstance()->executeS('
-            SELECT  pl.`id_product`, pl.`name`, cl.`name` as category_name, sa.`quantity` as quantity, gp.*
+            SELECT  pl.`id_product`, pl.`name`, cl.`name` as category_name, sa.`quantity` as quantity, gp.*, i.id_image
             FROM `' . _DB_PREFIX_ . 'product_lang` pl           
             LEFT JOIN `' . _DB_PREFIX_ . 'giftcard` gp ON(gp.`id_shop` = ' . (int) $this->context->shop->id . ') 
             LEFT JOIN `' . _DB_PREFIX_ . 'category_lang` cl ON(cl.`id_category` = gp.`id_category`)
             LEFT JOIN `' . _DB_PREFIX_ . 'stock_available` sa ON(sa.`id_product` = gp.`id_product`)
+            LEFT JOIN `' . _DB_PREFIX_ . 'image` i ON(i.`id_product` = pl.`id_product`)
             WHERE pl.`id_product` = gp.`id_product`
             AND pl.`id_shop` = ' . (int) $this->context->shop->id . '
             AND pl.`id_lang`= ' . (int) $this->context->language->id . '
@@ -1056,7 +1057,8 @@ class giftcard extends Module {
                 if ($file->isFile() && !$file->isDot() && (time() - $file->getMTime() > strtotime($id_card['validity'])))
                     unlink($file->getPathname());
             $product = new Product($id_card['id_product']);
-            $image = Product::getCover($id_card['id_product']);
+           // $image = Product::getCover($id_card['id_product']);
+            $image = $id_card['id_image'] ? $id_card['id_image'] : '' ;
             $currency = new Currency($this->context->currency->id);
             $tax = $id_card['tax'] == 0 ? ' ('.$this->l('WT').')' : ' ('.$this->l('ATI').')';
             $price = ($id_card['tax'] == 1) ? $product->price + ($product->price * $this->getTaxRate()) /100 : $product->price;
@@ -1084,7 +1086,7 @@ class giftcard extends Module {
                 'display_shadow' => $id_card['display_shadow'],
                 'colorshadow' => $colorshadow,
                 'values' => Tools::displayPrice($price, $currency, false, $this->context).$tax,                
-                'id_image' => $image ? $image['id_image'] : $this->l('No cover found !'),
+                'id_image' => $image ? $image : $this->l('No cover found !'),
                 'validity' => $validity,                
                 'partial_use' => $id_card['partial_use']
             );
@@ -1267,6 +1269,7 @@ class giftcard extends Module {
                 $giftcard->duration = ''; 
                 $giftcard->validity = Tools::getValue('validity');
             } 
+
             $giftcard->display_code = Tools::getValue('display_code');
             $giftcard->pos_code_x =  Tools::getValue('pos_code_x');
             $giftcard->pos_code_y =  Tools::getValue('pos_code_y');
@@ -1297,19 +1300,13 @@ class giftcard extends Module {
 
             $nameImport = _PS_MODULE_DIR_ . $this->name . '/img/models/';
             $image_path = $nameImport . $giftcard->image_path;
-            $id_image = Db::getInstance()->execute('
-                DELETE
+            $id_image = Db::getInstance()->getValue('
+                SELECT `id_image`
                 FROM `' . _DB_PREFIX_ . 'image`
-                WHERE `id_product` = ' . (int) $id_product . ' ');
-
-            /* generate new images */
-            $image = new Image();
-            $image->id_product = (int) $id_product;
-            $image->cover = 1;
-            $image->add();
+                WHERE `id_product` = ' . (int)$product->id . ' ');           
             $currency = new Currency($this->context->currency->id);
             $giftcardprice = Tools::displayPrice($new_price, $currency, false, $this->context);
-            $this->generateImage($id_product, $image->id, $image_path, $giftcardprice, $giftcard->display_code, $giftcard->pos_code_x, $giftcard->pos_code_y, $giftcard->colorcode, $giftcard->display_text, $giftcard->pos_text_x,
+            $this->generateImage($id_product, $id_image, $image_path, $giftcardprice, $giftcard->display_code, $giftcard->pos_code_x, $giftcard->pos_code_y, $giftcard->colorcode, $giftcard->display_text, $giftcard->pos_text_x,
                                  $giftcard->pos_text_y, $giftcard->text_size, $giftcard->colortext,  $giftcard->display_shadow,  $giftcard->colorshadow);
             ImageManager::thumbnail($image_path, 'product_mini_' . (int) $id_product . '_' . $this->context->shop->id . '.jpg', 45, 'jpg', true, false);
             $images = glob(_PS_ROOT_DIR_ . '/img/tmp/*_mini_*.*');
