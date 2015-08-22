@@ -69,6 +69,7 @@ class giftcard extends Module {
             `colorshadow` varchar(255) NOT NULL,
             `tax` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT 0,
             `partial_use` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT 0,
+            `highlight` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT 0,
             `id_shop` int(10) unsigned NOT NULL,
             PRIMARY KEY (`id_giftcard`))
             ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8'))
@@ -244,7 +245,7 @@ class giftcard extends Module {
         return $tax_rate;
     }
     
-    private function createProductGiftCard($name, $value, $image_name, $display_duration ,$duration, $validity, $tax, $partial_use, $display_code, $pos_code_x, $pos_code_y, $colorcode, $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow) {
+    private function createProductGiftCard($name, $value, $image_name, $display_duration ,$duration, $validity, $tax, $partial_use, $highlight, $display_code, $pos_code_x, $pos_code_y, $colorcode, $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow) {
         $id_lang = (int) $this->context->language->id;
         $link_rewrite = Tools::link_rewrite($this->l('Gift-Card'));
         $id_shop = (int) $this->context->shop->id;
@@ -344,6 +345,7 @@ class giftcard extends Module {
                 'colorshadow' => $colorshadow,
                 'tax' => $tax,
                 'partial_use' => $partial_use,
+                'highlight' => $highlight,
                 'id_shop' => $this->context->shop->id
             ));
             return true;
@@ -762,6 +764,27 @@ class giftcard extends Module {
                                 'label' => $this->l('Disabled')
                             ),
                         ),
+                    ),                
+                    array(
+                        'type' => 'switch',
+                        'is_bool' => true,
+                        'label' => $this->l('Highlight'),
+                        'name' => 'highlight',
+                        'class' => 't',
+                        'desc' => $this->l('Highlight the cart rule (only for card classic)'),
+                        'hint' => $this->l('Highlight the cart rule (only for card classic)'),
+                        'values' => array(
+                            array(
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ),
+                            array(
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ),
+                        ),
                     ),
                 ),
                 'submit' => array(
@@ -833,6 +856,7 @@ class giftcard extends Module {
             $helper->fields_value['display_shadow'] = 1;
             $helper->fields_value['colorshadow'] = '#000000';
             $helper->fields_value['partial_use'] = 0;
+            $helper->fields_value['highlight'] = 0;
         }
         return $helper->generateForm(array($fields_form));
     }
@@ -866,7 +890,8 @@ class giftcard extends Module {
             'colortext' => $giftcard->colortext,
             'display_shadow' => $giftcard->display_shadow,
             'colorshadow' => $giftcard->colorshadow,
-            'partial_use' => $giftcard->partial_use
+            'partial_use' => $giftcard->partial_use,
+            'highlight' => $giftcard->highlight
         );
         return $fields_value;
     }
@@ -934,7 +959,14 @@ class giftcard extends Module {
                 'type' => 'bool',
                 'align' => 'center',
                 'orderby' => false,
-                'active' => 'status'
+                'active' => 'partialuse'
+            ),
+            'highlight' => array(
+                'title' => $this->l('Highlight'),
+                'type' => 'bool',
+                'align' => 'center',
+                'orderby' => false,
+                'active' => 'highlight'
             )
         );
         $helper = new HelperList();
@@ -1013,7 +1045,8 @@ class giftcard extends Module {
                 'values' => Tools::displayPrice($price, $currency, false, $this->context).$tax,                
                 'id_image' => $image ? $image : $this->l('No cover found !'),
                 'validity' => $validity,                
-                'partial_use' => $id_card['partial_use']
+                'partial_use' => $id_card['partial_use'],
+                'highlight' => $id_card['highlight']
             );
         }
         $price = '';		
@@ -1139,11 +1172,11 @@ class giftcard extends Module {
             }           
             $tax = Tools::getValue('tax');
             $partial_use = Tools::getValue('partial_use');
+            $highlight = Tools::getValue('highlight');
             if((int)Configuration::get('PS_TAX') === 0 && $tax == 1)
                 return $this->_html .= $this->displayError($this->l('You can not create a card with tax if taxes are not enabled on your shop'));
-            $partial_use = Tools::getValue('partial_use');
             foreach ($values as $value) {			
-                if (!$this->createProductGiftCard($name . '-' . $value, (float) $value, $image_name, $display_duration ,(int)$duration, $validity, $tax, $partial_use, $display_code, $pos_code_x, $pos_code_y, $colorcode,
+                if (!$this->createProductGiftCard($name . '-' . $value, (float) $value, $image_name, $display_duration ,(int)$duration, $validity, $tax, $partial_use, $highlight, $display_code, $pos_code_x, $pos_code_y, $colorcode,
                                                 $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow)) {
                     return false;
                 }
@@ -1194,6 +1227,7 @@ class giftcard extends Module {
             $giftcard->colorshadow = Tools::getValue('colorshadow');
             $giftcard->tax = Tools::getValue('tax');
             $giftcard->partial_use = Tools::getValue('partial_use');
+            $giftcard->highlight = Tools::getValue('highlight');
             $giftcard->update();
             $partial = ($giftcard->partial_use == 0) ? $this->l('This voucher must be used in one time') : $this->l('This voucher can be used several times (as long as the balance is positive)');
             $usetax = ($giftcard->tax == 0) ? $this->l('WT') : $this->l('ATI');            
@@ -1227,13 +1261,22 @@ class giftcard extends Module {
             $id = Tools::getValue('id_giftcard');
             return $this->deleteProductGiftCard($id);
         }
-        if (Tools::isSubmit('statusgiftcard')) {		
+        if (Tools::isSubmit('partialusegiftcard')) {		
             $id_giftcard = Tools::getValue('id_giftcard');
             $giftcard = new GiftCardClass($id_giftcard);
             if ($giftcard->partial_use == 1)
                 $giftcard->partial_use = 0;
             else
                 $giftcard->partial_use = 1;
+            $giftcard->update();
+        }
+        if (Tools::isSubmit('highlightgiftcard')) {        
+            $id_giftcard = Tools::getValue('id_giftcard');
+            $giftcard = new GiftCardClass($id_giftcard);
+            if ($giftcard->highlight == 1)
+                $giftcard->highlight = 0;
+            else
+                $giftcard->highlight = 1;
             $giftcard->update();
         }
     }
@@ -1533,6 +1576,7 @@ class giftcard extends Module {
                         $email = $customer->email;
                         $products_data = '';
                         $products_data .='<p></p><br /><br /><p><span style="font-weight:bold;">' . $giftcard_data . '</span><a href="' . $productLink . '">  ' . $product['product_name'] . '</a></p><br /><br />';
+                        $my_vouchers = Context::getContext()->link->getPageLink('discount', true, Context::getContext()->language->id, null, false, $id_shop);
                         $datas = array(
                             '{firstname}' => $firstname,
                             '{lastname}' => $lastname,
@@ -1544,7 +1588,8 @@ class giftcard extends Module {
                             '{GiftCardBackground}' => $giftcardbackground,
                             '{GiftCardConditions}' => $GiftCardConditions,
                             '{GiftCardTax}' => $tax,
-                            '{GiftCardDatas}' => $products_data
+                            '{GiftCardDatas}' => $products_data,
+                            '{my_vouchers}' => $my_vouchers
                         );
                         $order->cardimage = dirname(__FILE__).'/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png';  
                         $order->title = $this->l('Your Gift Card');
@@ -1562,6 +1607,10 @@ class giftcard extends Module {
                             $cart_rule->name[$lang['id_lang']] = $cart_rule_name;
                         }
                         $cart_rule->description = $cart_rule_name;
+                        if ($giftcard->highlight) {
+                            $cart_rule->id_customer = $customer->id;
+                            $cart_rule->highlight = 1;
+                        }
                         $cart_rule->code = $code;
                         $cart_rule->active = 1;
                         $cart_rule->date_from = $date_from;
