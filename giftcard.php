@@ -1,31 +1,24 @@
 <?php
-
 /*
- * 2014 Loulou66 and Eolia
+ * 2015 Loulou66 and Eolia
  * giftcard module for Prestashop
  * All Rights Reserved
  */
-
 if (!defined('_PS_VERSION_'))
     exit;
-
 include_once _PS_MODULE_DIR_ . 'giftcard/GiftCardClass.php';
 
 class giftcard extends Module {
-
     public function __construct() {
-
         $this->name = 'giftcard';
         $this->tab = 'front_office_features';
-        $this->version = '3.2.2';
+        $this->version = '3.2.5';
         $this->author = 'Loulou66 and Eolia';
         $this->need_instance = 0;
         $this->_path = dirname(__FILE__);
         if (version_compare(_PS_VERSION_, '1.6', '>'))
             $this->bootstrap = true;
-
         parent::__construct();
-
         $this->displayName = $this->l('Gift Card');
         $this->description = $this->l('Create Gift Card Product');
         $this->confirmUninstall = $this->l('WARNING: if you have some products created by this Gift Card module, you must delete them first.');
@@ -33,7 +26,7 @@ class giftcard extends Module {
         $this->addAsTrusted();
     }
 
-    public function install() {
+    public function install() {	
         if (!parent::install() ||
                 !$this->registerHook('actionPaymentConfirmation') ||
                 !$this->installDB() ||
@@ -42,7 +35,7 @@ class giftcard extends Module {
         return true;
     }
 
-    public function uninstall() {
+    public function uninstall() {	
         $datas = $this->checkCards();
         if ($datas) {
             $this->context->controller->errors[] = $this->l('Unable to uninstall this module. You must delete all Gift-Card products created before uninstalling it');
@@ -54,7 +47,6 @@ class giftcard extends Module {
     }
 
     public function installDb() {
-
         if (!Db::getInstance()->execute('
             CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'giftcard` (
             `id_giftcard` int(10) unsigned NOT NULL auto_increment,
@@ -77,6 +69,7 @@ class giftcard extends Module {
             `colorshadow` varchar(255) NOT NULL,
             `tax` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT 0,
             `partial_use` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT 0,
+            `highlight` TINYINT( 1 ) UNSIGNED NOT NULL DEFAULT 0,
             `id_shop` int(10) unsigned NOT NULL,
             PRIMARY KEY (`id_giftcard`))
             ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8'))
@@ -85,13 +78,12 @@ class giftcard extends Module {
     }
 
     public static function dropTables() {
-
         if (!Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'giftcard`'))
             return false;
         return true;
     }
 
-    public function instalMailsLanguage() {
+    public function instalMailsLanguage() {	
         $mails_dir = _PS_MODULE_DIR_.'giftcard/mails/';
         $folder_en = _PS_MODULE_DIR_.'giftcard/mails/en';
         foreach (Language::getLanguages(true) as $lang) {
@@ -111,18 +103,14 @@ class giftcard extends Module {
     }
 
     public function addAsTrusted() {
-
         if (defined('self::CACHE_FILE_TRUSTED_MODULES_LIST') == true) {
             if (isset($this->context->controller->controller_name) &&
                     $this->context->controller->controller_name == 'AdminModules') {
-
                 $sxe = new SimpleXMLElement('<theme/>');
-
                 $modules = $sxe->addChild('modules');
                 $module = $modules->addChild('module');
                 $module->addAttribute('action', 'install');
                 $module->addAttribute('name', $this->name);
-
                 $trusted = $sxe->saveXML();
                 file_put_contents(_PS_ROOT_DIR_ . '/config/xml/themes/' . $this->name . '.xml', $trusted);
                 if(is_file(_PS_ROOT_DIR_ . Module::CACHE_FILE_UNTRUSTED_MODULES_LIST))
@@ -131,16 +119,14 @@ class giftcard extends Module {
         }
     }
 
-    private function checkCards() {
-    
+    private function checkCards() {    
         // First: clean the giftcard table
         // A product has could be uninstalled directly from the BO...
         Db::getInstance()->execute('
             DELETE FROM `' . _DB_PREFIX_ . 'giftcard` 
             WHERE `id_product` NOT IN (
             SELECT `id_product` 
-            FROM `' . _DB_PREFIX_ . 'product_shop`)');
-        
+            FROM `' . _DB_PREFIX_ . 'product_shop`)');        
         // Then check remaining items
         return Db::getInstance()->executeS('
             SELECT * FROM `' . _DB_PREFIX_ . 'giftcard`
@@ -148,58 +134,46 @@ class giftcard extends Module {
             GROUP BY id_category');
     }
     
-    private function checkAwaitingOrder($id_product) {
-    
+    private function checkAwaitingOrder($id_product) {    
         /* Verify if one order at least is awaiting payment */
         $states = array(Configuration::get('PS_OS_WS_PAYMENT'),
             Configuration::get('PS_OS_PAYMENT'),
             Configuration::get('PS_OS_CANCELED')
         );
-
         return Db::getInstance()->getValue('
             SELECT od.`id_order`
             FROM `' . _DB_PREFIX_ . 'order_detail` od
             LEFT JOIN `' . _DB_PREFIX_ . 'orders` o ON(o.`id_order` = od.`id_order`)
             WHERE o.`id_shop` = ' . (int) $this->context->shop->id . '
             AND o.`current_state` NOT IN  (' . implode(',', $states) . ')
-            AND od.`product_id` = ' . $id_product);
-            
+            AND od.`product_id` = ' . $id_product);            
     }
 
     private function deleteProductGiftCard($id) {
-
         $id_lang = (int) $this->context->language->id;
         $link_rewrite = Tools::link_rewrite($this->l('Gift-Card'));
         $id_shop = (int) $this->context->shop->id;
         if (!$id)
             return $this->_html .= $this->displayError($this->l('Unable to suppress product'));
-
         $giftcard = new GiftCardClass($id);
         $id_product = $giftcard->id_product;
-
         if (!$id_product)
             return $this->_html .= $this->displayError($this->l('This Product has already been removed'));
-
         /* Verify if one order at least is awaiting payment */
         $states = array(Configuration::get('PS_OS_WS_PAYMENT'),
             Configuration::get('PS_OS_PAYMENT'),
             Configuration::get('PS_OS_CANCELED')
         );
-
         if ($awaiting_order = $this->checkAwaitingOrder($id_product))
             return $this->_html .= $this->displayError($this->l('This product could not be deleted, an associated order is awaiting payment') . ': <a href="index.php?controller=AdminOrders&id_order=' . $awaiting_order . '&vieworder&token=' . Tools::getAdminTokenLite('AdminOrders') . '">id_order n° ' . $awaiting_order . '</a>');
-
         /* verify is specific category exist */
         $category = $giftcard->id_category;
         if (!$category)
             return $this->_html .= $this->displayError($this->l('Database Error: No category found for this product'));
-
-
         $id_customization_field = Db::getInstance()->getValue('
             SELECT  cf.`id_customization_field`
             FROM `' . _DB_PREFIX_ . 'customization_field` cf        
             WHERE cf.`id_product` = "' . $id_product . '" ');
-
         /* Check existing datas out of this product */
         $datas = Db::getInstance()->executeS('
             SELECT  *
@@ -208,7 +182,6 @@ class giftcard extends Module {
             AND `id_product` != ' . $id_product . '
             GROUP BY id_category'
         );
-
         if (!$datas) {
             // Delete specific category if giftcard is empty
             Db::getInstance()->delete('category', ' `id_category` = "' . $category . '" ');
@@ -218,15 +191,12 @@ class giftcard extends Module {
             Db::getInstance()->delete('category_shop', '`id_category` = "' . $category . '" ');
             Category::regenerateEntireNtree();
         }
-
         $product = new Product($id_product);
         if (!$product->delete())
             return $this->_html .= $this->displayError($this->l('Unable to delete this product'));
-
         Db::getInstance()->delete('customization_field_lang', '`id_customization_field` = "' . $id_customization_field . '"');
         Db::getInstance()->delete('customization_field', '`id_product` = "' . $id_product . '"');
         Db::getInstance()->delete('product_carrier', '`id_product` = "' . $id_product . '"');
-
         Db::getInstance()->delete('stock_available', '`id_product` = "' . $id_product . '"');
         $name_attribute_group = $this->l('Value');
         $id_attribute_group = Db::getInstance()->getValue('
@@ -234,46 +204,37 @@ class giftcard extends Module {
             FROM `' . _DB_PREFIX_ . 'attribute_group_lang` agl
             WHERE agl.`name` = "' . $name_attribute_group . '"
             ');
-
         $attribute_group = new AttributeGroup($id_attribute_group);
         if (!$attribute_group->delete())
             return $this->_html .= $this->displayError($this->l('Unable to delete attributes of this product'));
-
         $id_images = Db::getInstance()->executeS('
             SELECT  i.`id_image`
             FROM `' . _DB_PREFIX_ . 'image` i
             WHERE i.`id_product` = ' . (int) $id_product . ' ');
-
         foreach ($id_images as $key => $id_image) {
             $image = new Image($id_image['id_image']);
             if (!$image->delete())
                 return $this->_html .= $this->displayError($this->l('Unable to delete images of this product'));
         }
-
         /* Clean the temp directory if it was not */
         array_map('unlink', glob(_PS_TMP_IMG_DIR_ . '*' . (int) $this->context->shop->id . '.jpg'));
         Db::getInstance()->delete('giftcard', ' `id_product` = "' . (int) $id_product . '" ');
-
         return $this->_html .= $this->displayConfirmation($this->l('Gift card successfully deleted'));
     }
 
     public function cardExist($name) {
-
         $id_card = Db::getInstance()->getValue('
             SELECT  pl.`id_product`
             FROM `' . _DB_PREFIX_ . 'product_lang` pl
             WHERE pl.`name` = "' . $name . '"
             AND pl.`id_lang`= ' . (int) $this->context->language->id . '
             AND pl.`id_shop`= ' . (int) $this->context->shop->id);
-
         if ($id_card)
             return $id_card;
-
         return false;
     }
 
     private function getTaxRate() {
-
         $tax_rate = Db::getInstance()->getValue('
             SELECT  t.`rate`
             FROM `' . _DB_PREFIX_ . 'tax` t
@@ -281,18 +242,14 @@ class giftcard extends Module {
             WHERE t.`active` = 1
             AND t.`deleted`= 0
             AND tr.`id_tax` = t.`id_tax`');
-
         return $tax_rate;
     }
     
-    private function createProductGiftCard($name, $value, $image_name, $display_duration ,$duration, $validity, $tax, $partial_use, $display_code, $pos_code_x, $pos_code_y, $colorcode,
-                                            $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow) {
-    
+    private function createProductGiftCard($name, $value, $image_name, $display_duration ,$duration, $validity, $tax, $partial_use, $highlight, $display_code, $pos_code_x, $pos_code_y, $colorcode, $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow) {
         $id_lang = (int) $this->context->language->id;
         $link_rewrite = Tools::link_rewrite($this->l('Gift-Card'));
         $id_shop = (int) $this->context->shop->id;
         $nameImport = _PS_MODULE_DIR_ . $this->name . '/img/models/';
-
         if (!$image_name)
             $this->_error[] = $this->l('You must choose a model to this card');
         $image_path = $nameImport . $image_name;
@@ -300,20 +257,17 @@ class giftcard extends Module {
             $this->_error[] = $this->l('This product already exists') . ': ' . $name;
         else {
             $category_name = $this->displayName;
-
             /* Check if existing giftcard */
-
             $id_category = Db::getInstance()->getValue('
                 SELECT  cl.`id_category`
                 FROM `' . _DB_PREFIX_ . 'category_lang` cl
                 WHERE cl.`name`= "' . $category_name . '"                
                 ');
-
-            if ($id_category) {
+            if ($id_category) {			
                 $category = new Category((int) $id_category);
                 $id_category = $category->id;
-            } else {
-
+            } 
+			else {
                 /* create category 'Gift Card' for the product */
                 $category = new Category();
                 foreach (Language::getLanguages(true) as $lang) {
@@ -332,8 +286,7 @@ class giftcard extends Module {
             foreach (Language::getLanguages(false) as $lang) {
                 $product->name[$lang['id_lang']] = $name;
                 $product->link_rewrite[$lang['id_lang']] = $link_rewrite;
-            }
-            
+            }            
             $product->wholesale_price = 0;
             $product->reference = 'GC-' . round($value);
             $product->active = 1;
@@ -358,13 +311,11 @@ class giftcard extends Module {
             // Label insertion
             $names = array($this->l('Personalize your card'), $this->l('Your firstname (display in the mail)'), $this->l('Your lastname (display in the mail)'), $this->l('If you want send this card to a friend enter his Email address'));
             $this->addCustom($product, $names);
-
             Db::getInstance()->insert('category_product', array(
                 'id_category' => $id_category,
                 'id_product' => $id_product,
                 'position' => 0
             ));
-
             /* add images for 'Gift Card' product */
             $image = new Image();
             $image->id_product = (int) $id_product;
@@ -372,7 +323,6 @@ class giftcard extends Module {
             $image->add();
             $currency = new Currency($this->context->currency->id);
             $card_price = Tools::displayPrice((float)$value, $currency, false, $this->context);
-
             /* generate images */
             $this->generateImage($id_product, $image->id, $image_path, $card_price, $display_code, $pos_code_x, $pos_code_y, $colorcode, $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow);
             Db::getInstance()->insert('giftcard', array(
@@ -395,15 +345,14 @@ class giftcard extends Module {
                 'colorshadow' => $colorshadow,
                 'tax' => $tax,
                 'partial_use' => $partial_use,
+                'highlight' => $highlight,
                 'id_shop' => $this->context->shop->id
             ));
-
             return true;
         }
     }
 
     public function generateImage($id_product, $id_image, $image_path, $value, $display_code, $pos_code_x, $pos_code_y, $colorcode, $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow) {
-        
         $image = new Image($id_image);
         $tmpName = tempnam(_PS_TMP_IMG_DIR_, 'PS');
         $codecolor = $this->hex2rgb($colorcode);
@@ -430,27 +379,24 @@ class giftcard extends Module {
         imagealphablending($imageView, false);
         imagesavealpha($imageView, true);
         imagepng($imageView, $tmpName);
-        imagedestroy($imageView);
-        
+        imagedestroy($imageView);        
         $new_path = $image->getPathForCreation();        
         $imagesTypes = ImageType::getImagesTypes('products');
-        ImageManager::resize($tmpName, $new_path . '.jpg', null, null, 'jpg', false);
-       
-        foreach ($imagesTypes as $k => $image_type) {
+        ImageManager::resize($tmpName, $new_path . '.jpg', null, null, 'jpg', false);       
+        foreach ($imagesTypes as $k => $image_type) {		
             if (!ImageManager::resize($tmpName, $new_path . '-' . stripslashes($image_type['name']) . '.' . $image->image_format, $image_type['width'], $image_type['height'], $image->image_format))
                 return $this->errors[] = Tools::displayError('An error occurred while copying this image:') . ' ' . stripslashes($image_type['name']);
         }
-
         @unlink($tmpName);
         unset($tmpName);
         Hook::exec('actionWatermark', array('id_image' => $id_image, 'id_product' => $id_product));
     }
 
-    private function addCustom($product, $names) {
+    private function addCustom($product, $names) {	
         $product->customizable = 1;
         $product->text_fields =(int)count($names);      
         $product->createLabels(0, (int)count($names));
-        if ($product->save()) {
+        if ($product->save()) {		
             $id_customization_fields = Db::getInstance()->executeS('SELECT `id_customization_field` FROM `'._DB_PREFIX_.'customization_field` WHERE `id_product` = '.$product->id);
             foreach (Language::getLanguages(false) as $lang) {
                 foreach ($id_customization_fields as $key => $field) {
@@ -470,10 +416,8 @@ class giftcard extends Module {
     * $value (string): the text or price
     * $size (int): size of the font
     * $position (x and y) (int): 0(left), 1(center), 2(right)
-    * return x,y position in an array */
-    
-    private function getOrigin($font, $value, $size, $position_x, $position_y) {
-        
+    * return x,y position in an array */    
+    private function getOrigin($font, $value, $size, $position_x, $position_y) {        
         $box = imagettfbbox($size, 0, $font, $value);
         $width_text = $box[4] - abs($box[0]);
         $height_text = abs($box[5]) - $box[1];
@@ -499,13 +443,11 @@ class giftcard extends Module {
             case 2:
                 $origin['y'] = (273 - $box[1]);
                 break;
-        }
-        
+        }        
         return $origin;
     }
 
-    private function initOptionCreate($id_giftcard) {
-    
+    private function initOptionCreate($id_giftcard) {    
         $token = Tools::getAdminTokenLite('AdminModules');
         $back = Tools::safeOutput(Tools::getValue('back', ''));
         $current_index = AdminController::$currentIndex;       
@@ -519,7 +461,6 @@ class giftcard extends Module {
         $languages = Language::getLanguages(false);
         foreach ($languages as $k => $language)
             $languages[$k]['is_default'] = (int) $language['id_lang'] == Configuration::get('PS_LANG_DEFAULT');
-
         $icon = '../modules/' . $this->name . '/img/icon-valid.png';
         $models_dir = _PS_MODULE_DIR_ . 'giftcard/img/models/';
         $list = array_diff(scandir($models_dir), array('..', '.'));
@@ -536,8 +477,7 @@ class giftcard extends Module {
                 "id" => $i,
                 "name" => $i
             );
-        }
-    
+        }    
         $fields_form = array(
             'form' => array(
                 version_compare(_PS_VERSION_, '1.6', '<') ? '' :
@@ -610,6 +550,7 @@ class giftcard extends Module {
                         'name' => 'duration',
                         'align' => 'text-center',
                         'class' => 'fixed-width-xxl',
+                        'required' => true,
                         'desc' => $this->l('Enter the number of months of duration after the receipt of gift cards (by Email).'),
                         'hint' => $this->l('Enter the number of months of duration after the receipt of gift cards (by Email).'),
                         'form_group_class'  => 'display_duration_group'
@@ -824,6 +765,27 @@ class giftcard extends Module {
                                 'label' => $this->l('Disabled')
                             ),
                         ),
+                    ),                
+                    array(
+                        'type' => 'switch',
+                        'is_bool' => true,
+                        'label' => $this->l('Highlight'),
+                        'name' => 'highlight',
+                        'class' => 't',
+                        'desc' => $this->l('Highlight the cart rule (only for card classic)'),
+                        'hint' => $this->l('Highlight the cart rule (only for card classic)'),
+                        'values' => array(
+                            array(
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ),
+                            array(
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ),
+                        ),
                     ),
                 ),
                 'submit' => array(
@@ -841,10 +803,7 @@ class giftcard extends Module {
                 )
             )
         );
-
-        $this->context->smarty->assign(array(
-            'models' => '../modules/giftcard/img/models/'));
-
+        $this->context->smarty->assign(array('models' => '../modules/giftcard/img/models/'));
         $helper = new HelperForm();
         $helper->module = $this;
         $helper->toolbar_btn = array(
@@ -859,7 +818,6 @@ class giftcard extends Module {
                 'desc' => $this->l('Cancel')
             )
         );
-
         $helper->title = $title;
         $helper->name_controller = 'giftcard';
         $helper->identifier = $this->identifier;
@@ -874,11 +832,12 @@ class giftcard extends Module {
         $helper->show_toolbar = version_compare(_PS_VERSION_, '1.5.6', '>') ? true : false;
         $helper->default_form_language = (int) Configuration::get('PS_LANG_DEFAULT');
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
-        if ($id_giftcard) {
+        if ($id_giftcard) {		
             $helper->fields_value = $this->getGiftcardFieldValues($id_giftcard);
             $fields_form['form']['input'][] = array('type' => 'hidden', 'name' => 'id_giftcard');
             $fields_form['form']['input'][] = array('type' => 'hidden', 'name' => 'id_product');
-        } else {
+        } 
+		else {		
             $helper->fields_value['product_name'] = $this->l('New gift card');
             $helper->fields_value['model'] = 'card-default.png';
             $helper->fields_value['values'] = '10,20,30,40,50,100,200';
@@ -898,12 +857,12 @@ class giftcard extends Module {
             $helper->fields_value['display_shadow'] = 1;
             $helper->fields_value['colorshadow'] = '#000000';
             $helper->fields_value['partial_use'] = 0;
+            $helper->fields_value['highlight'] = 0;
         }
-
         return $helper->generateForm(array($fields_form));
     }
 
-    public function getGiftcardFieldValues($id_giftcard) {       
+    public function getGiftcardFieldValues($id_giftcard) {	
         $giftcard = new GiftCardClass($id_giftcard);
         $product = Db::getInstance()->getRow('SELECT  p.`price`, pl.`name` FROM `' . _DB_PREFIX_ . 'product` p
             LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl  ON(p.`id_product` = pl.`id_product`)
@@ -932,14 +891,13 @@ class giftcard extends Module {
             'colortext' => $giftcard->colortext,
             'display_shadow' => $giftcard->display_shadow,
             'colorshadow' => $giftcard->colorshadow,
-            'partial_use' => $giftcard->partial_use
+            'partial_use' => $giftcard->partial_use,
+            'highlight' => $giftcard->highlight
         );
-
         return $fields_value;
     }
 
     protected function giftcardList() {
-
         $this->fields_list = array(
             'id_giftcard' => array(
                 'title' => 'ID',
@@ -1002,10 +960,16 @@ class giftcard extends Module {
                 'type' => 'bool',
                 'align' => 'center',
                 'orderby' => false,
-                'active' => 'status'
+                'active' => 'partialuse'
+            ),
+            'highlight' => array(
+                'title' => $this->l('Highlight'),
+                'type' => 'bool',
+                'align' => 'center',
+                'orderby' => false,
+                'active' => 'highlight'
             )
         );
-
         $helper = new HelperList();
         $helper->module = $this;
         $helper->simple_header = false;
@@ -1023,16 +987,17 @@ class giftcard extends Module {
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
         $displayError = '';
         $errors = '';
-        if($this->_error) {
+        if($this->_error) {		
             foreach ($this->_error as $error) 
                 $errors .='<li> - ' . $error . '</li>';
             $displayError = $this->displayError('<ul>' . $this->l('An error at least occured. Unable to create this gift card: ') . $errors . '</ul>');
-        }        
-        return $displayError.$helper->generateList($this->getListContent((int) Configuration::get('PS_LANG_DEFAULT')), $this->fields_list);
+        }  
+		$result = $this->getListContent((int) Configuration::get('PS_LANG_DEFAULT'));
+		$helper->listTotal = count($result);		
+        return $displayError.$helper->generateList($result, $this->fields_list);
     }
 
     protected function getListContent($id_lang) {
-
         $result = array();
         $ids_card = Db::getInstance()->executeS('
             SELECT  pl.`id_product`, pl.`name`, cl.`name` as category_name, sa.`quantity` as quantity, gp.*, i.id_image
@@ -1047,33 +1012,26 @@ class giftcard extends Module {
             AND cl.`id_lang`= ' . (int) $this->context->language->id . '
             GROUP BY pl.`id_product`
          ');
-
         foreach ($ids_card as $id_card) {
             // Suppression des images plus anciennes que leur date de validité
             // Elles sont conservées pour les renvoyer manuellement au cas où le client n'aurait pas reçu le mail...
-
             $folder = new DirectoryIterator(_PS_MODULE_DIR_ . 'giftcard/cards/');
             foreach ($folder as $file)
                 if ($file->isFile() && !$file->isDot() && (time() - $file->getMTime() > strtotime($id_card['validity'])))
                     unlink($file->getPathname());
             $product = new Product($id_card['id_product']);
-           // $image = Product::getCover($id_card['id_product']);
             $image = $id_card['id_image'] ? $id_card['id_image'] : '' ;
             $currency = new Currency($this->context->currency->id);
             $tax = $id_card['tax'] == 0 ? ' ('.$this->l('WT').')' : ' ('.$this->l('ATI').')';
             $price = ($id_card['tax'] == 1) ? $product->price + ($product->price * $this->getTaxRate()) /100 : $product->price;
-
             if (empty($id_card['display_shadow']) || $id_card['display_shadow'] = 0 || ($id_card['colortext'] == $id_card['colorshadow']))                
                 $colorshadow = $this->l('Deactivate');          
             else 
-                $colorshadow = $id_card['colorshadow'];
-           
+                $colorshadow = $id_card['colorshadow'];           
             if ($id_card['display_duration'])
                 $validity = '+ '.$id_card['duration'].' '.$this->l('Month(s)');
             else
                 $validity = Tools::displayDate($id_card['validity']);
-           
-
             $result[] = array(
                 'id_giftcard' => $id_card['id_giftcard'],
                 'name' => $id_card['name'],
@@ -1088,16 +1046,15 @@ class giftcard extends Module {
                 'values' => Tools::displayPrice($price, $currency, false, $this->context).$tax,                
                 'id_image' => $image ? $image : $this->l('No cover found !'),
                 'validity' => $validity,                
-                'partial_use' => $id_card['partial_use']
+                'partial_use' => $id_card['partial_use'],
+                'highlight' => $id_card['highlight']
             );
         }
-        $price = '';
-
+        $price = '';		
         return $result;
     }
 
-    public function getContent() {  
-        
+    public function getContent() {        
         $this->_html ='';
         $id_giftcard = Tools::getValue('id_giftcard');
         $giftcard = new GiftCardClass($id_giftcard);
@@ -1105,15 +1062,13 @@ class giftcard extends Module {
         $code_y =  isset($giftcard->pos_text_y) ? ($giftcard->pos_code_y * 60) : 0;
         $text_x =  isset($giftcard->pos_text_x) ? ($giftcard->pos_text_x * 100) :200;
         $text_y =  isset($giftcard->pos_text_y) ? ($giftcard->pos_text_y * 60) : 120;        
-        if($id_giftcard !== false) { 
-            $model = $giftcard->image_path;           
-        }
-        else
-        {
+        if($id_giftcard !== false)
+            $model = $giftcard->image_path;
+        else {		
             $models_dir = _PS_MODULE_DIR_ . 'giftcard/img/models/';
             $list = array_diff(scandir($models_dir), array('..', '.'));
             $models = array();
-            foreach ($list as $key => $model) {
+            foreach ($list as $key => $model) {			
                 $models[] = array(
                     "id" => $model,
                     "name" => $model
@@ -1126,7 +1081,7 @@ class giftcard extends Module {
         $space = '<div class="clear">&nbsp;</div>';
         $this->_error = array();
         $this->postProcess();
-        if (Tools::isSubmit('newgiftCard') || Tools::isSubmit('updategiftcard')) {
+        if (Tools::isSubmit('newgiftCard') || Tools::isSubmit('updategiftcard')) {		
             $id_giftcard = Tools::getValue('id_giftcard');
             $this->_html .= '
                 <style>
@@ -1143,9 +1098,8 @@ class giftcard extends Module {
     }
 
     public function GenerateCardCode($length) {
-
         $code = "";
-        for ($i = 0; $i < $length; $i++) {
+        for ($i = 0; $i < $length; $i++) {		
             $randnum = mt_rand(0, 61);
             if ($randnum < 10)
                 $code .= chr($randnum + 48);
@@ -1160,14 +1114,11 @@ class giftcard extends Module {
                 WHERE code = "' . $code . '"');
         if ($cartRule)
             return $this->GenerateCardCode($length);
-
         return $code;
     }
 
-    private function hex2rgb($hex) {    
-        
+    private function hex2rgb($hex) {
         $hex = str_replace("#", "", $hex);
-
         if (strlen($hex) == 3) {
             $r = hexdec(substr($hex, 0, 1) . substr($hex, 0, 1));
             $g = hexdec(substr($hex, 1, 1) . substr($hex, 1, 1));
@@ -1177,21 +1128,18 @@ class giftcard extends Module {
             $g = hexdec(substr($hex, 2, 2));
             $b = hexdec(substr($hex, 4, 2));
         }
-        $rgb = array($r, $g, $b);
-        
+        $rgb = array($r, $g, $b);        
         return $rgb;
     }
 
-    public function postProcess() { 
-
+    public function postProcess() {
         $nameImport = _PS_MODULE_DIR_ . $this->name . '/img/models/';
         $image_name = '';                   
-        if (Tools::isSubmit('submitCreateProduct')) {
-            if ($_FILES['cardimage']['name'] != '') {
+        if (Tools::isSubmit('submitCreateProduct')) {		
+            if ($_FILES['cardimage']['name'] != '') {			
                 $file = Tools::fileAttachment('cardimage');
                 $sqlExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $mimeType = array('image/png', 'image/x-png');
-
                 if (!$file || empty($file) || $sqlExtension != 'png' || !in_array($file['mime'], $mimeType))
                     return $this->_html .= $this->displayError($this->l('Bad format image file') . ': ' . $this->l('Only png format file accepted') . ' (450 x 275 px)');
                 else {
@@ -1216,20 +1164,25 @@ class giftcard extends Module {
             $display_shadow = Tools::getValue('display_shadow');
             $colorshadow = Tools::getValue('colorshadow');
             $display_duration = Tools::getValue('display_duration');
-            if ($display_duration) {
+            if ($display_duration) {			
                 $duration = Tools::getValue('duration'); 
                 $validity = '';
-            } else {
+            } else {			
                 $duration = ''; 
                 $validity = Tools::getValue('validity');
-            }           
+            }
+            if (empty($duration) && empty($validity)) {
+               $display_duration = 1;
+               $duration = 3;
+               $validity = '';
+            }            
             $tax = Tools::getValue('tax');
             $partial_use = Tools::getValue('partial_use');
+            $highlight = Tools::getValue('highlight');
             if((int)Configuration::get('PS_TAX') === 0 && $tax == 1)
                 return $this->_html .= $this->displayError($this->l('You can not create a card with tax if taxes are not enabled on your shop'));
-            $partial_use = Tools::getValue('partial_use');
-            foreach ($values as $value) {
-                if (!$this->createProductGiftCard($name . '-' . $value, (float) $value, $image_name, $display_duration ,(int)$duration, $validity, $tax, $partial_use, $display_code, $pos_code_x, $pos_code_y, $colorcode,
+            foreach ($values as $value) {			
+                if (!$this->createProductGiftCard($name . '-' . $value, (float) $value, $image_name, $display_duration ,(int)$duration, $validity, $tax, $partial_use, $highlight, $display_code, $pos_code_x, $pos_code_y, $colorcode,
                                                 $display_text, $pos_text_x, $pos_text_y, $text_size, $colortext, $display_shadow, $colorshadow)) {
                     return false;
                 }
@@ -1237,8 +1190,7 @@ class giftcard extends Module {
             return $this->_html .= $this->displayConfirmation($this->l('The Gift Card has been created  successfully.'));
         }
 
-        if (Tools::isSubmit('submitUpdateProduct')) {
-            
+        if (Tools::isSubmit('submitUpdateProduct')) {            
             $createnewmodel = false;
             $id_giftcard = Tools::getValue('id_giftcard');
             $new_price = (float)Tools::getValue('values');
@@ -1247,11 +1199,10 @@ class giftcard extends Module {
             $id_product = $giftcard->id_product;
             if ($awaiting_order = $this->checkAwaitingOrder($id_product))
                 return $this->_html .= $this->displayError($this->l('This product could not be modified, an associated order is awaiting payment') . ': <a href="index.php?controller=AdminOrders&id_order=' . $awaiting_order . '&vieworder&token=' . Tools::getAdminTokenLite('AdminOrders') . '">id_order n° ' . $awaiting_order . '</a>');
-            if ($_FILES['cardimage']['name'] != '') {
+            if ($_FILES['cardimage']['name'] != '') {			
                 $file = Tools::fileAttachment('cardimage');
                 $sqlExtension = pathinfo($file['name'], PATHINFO_EXTENSION);
                 $mimeType = array('image/png', 'image/x-png');
-
                 if (!$file || empty($file) || $sqlExtension != 'png' || !in_array($file['mime'], $mimeType))
                     return $this->_html .= $this->displayError($this->l('Bad format image file') . ': ' . $this->l('Only png format file accepted') . ' (450 x 275 px)');
                 else {
@@ -1262,14 +1213,17 @@ class giftcard extends Module {
             } else
                 $giftcard->image_path = Tools::getValue('model');
             $giftcard->display_duration = Tools::getValue('display_duration');    
-            if (Tools::getValue('display_duration') == 1) {
+            if ($giftcard->display_duration) {			
                 $giftcard->duration = (int)Tools::getValue('duration'); 
-                $giftcard->validity = $this->l('Date of mailing of the card by Email').' +'.$giftcard->duration.' '.$this->l('Month');
+                $giftcard->validity = '';
             } else {
                 $giftcard->duration = ''; 
                 $giftcard->validity = Tools::getValue('validity');
-            } 
-
+            }           
+             if (empty($giftcard->duration) && empty($giftcard->validity)) {
+               $giftcard->display_duration = 1;
+               $giftcard->duration = 3;
+            }
             $giftcard->display_code = Tools::getValue('display_code');
             $giftcard->pos_code_x =  Tools::getValue('pos_code_x');
             $giftcard->pos_code_y =  Tools::getValue('pos_code_y');
@@ -1283,21 +1237,23 @@ class giftcard extends Module {
             $giftcard->colorshadow = Tools::getValue('colorshadow');
             $giftcard->tax = Tools::getValue('tax');
             $giftcard->partial_use = Tools::getValue('partial_use');
+            $giftcard->highlight = Tools::getValue('highlight');
             $giftcard->update();
-
             $partial = ($giftcard->partial_use == 0) ? $this->l('This voucher must be used in one time') : $this->l('This voucher can be used several times (as long as the balance is positive)');
-            $usetax = ($giftcard->tax == 0) ? $this->l('WT') : $this->l('ATI');
-            
+            $usetax = ($giftcard->tax == 0) ? $this->l('WT') : $this->l('ATI');            
             $product = new Product($id_product);
             foreach (Language::getLanguages(false) as $lang) {
                 $product->name[$lang['id_lang']] = Tools::getValue('product_name');
             }
             $price = ($giftcard->tax == 1) ? (100 * $new_price) / (100 + $this->getTaxRate()) : $new_price;
             $product->price = round((float)$price,6);
-            $price = Tools::displayPrice($product->price, $currency, false, $this->context); 
-            $product->description_short = $partial.'.<br/>'.$this->l('The amount value will be use only in').' '.$usetax.'.<br/>'.$this->l('Available until').': '.$giftcard->validity;
+            $price = Tools::displayPrice($product->price, $currency, false, $this->context);
+            if ($giftcard->display_duration)
+                $desc_validity =  $this->l('Date of mailing of the card by Email').' +'.$giftcard->duration.' '.$this->l('Month');
+            else
+                $desc_validity = Tools::displayDate($giftcard->validity);   
+            $product->description_short = $partial.'.<br/>'.$this->l('The amount value will be use only in').' '.$usetax.'.<br/>'.$this->l('Available until').': '.$desc_validity;
             $product->update();
-
             $nameImport = _PS_MODULE_DIR_ . $this->name . '/img/models/';
             $image_path = $nameImport . $giftcard->image_path;
             $id_image = Db::getInstance()->getValue('
@@ -1315,26 +1271,31 @@ class giftcard extends Module {
             }
             return $this->_html .= $this->displayConfirmation($this->l('The Gift Card has been updated successfully.'));
         }
-
-        if (Tools::isSubmit('deletegiftcard')) {
+        if (Tools::isSubmit('deletegiftcard')) {		
             $id = Tools::getValue('id_giftcard');
             return $this->deleteProductGiftCard($id);
         }
-
-        if (Tools::isSubmit('statusgiftcard')) {
+        if (Tools::isSubmit('partialusegiftcard')) {		
             $id_giftcard = Tools::getValue('id_giftcard');
             $giftcard = new GiftCardClass($id_giftcard);
-
             if ($giftcard->partial_use == 1)
                 $giftcard->partial_use = 0;
             else
                 $giftcard->partial_use = 1;
             $giftcard->update();
         }
+        if (Tools::isSubmit('highlightgiftcard')) {        
+            $id_giftcard = Tools::getValue('id_giftcard');
+            $giftcard = new GiftCardClass($id_giftcard);
+            if ($giftcard->highlight == 1)
+                $giftcard->highlight = 0;
+            else
+                $giftcard->highlight = 1;
+            $giftcard->update();
+        }
     }
 
-    private function _previewMail() {
-    
+    private function _previewMail() {    
         $ps_shop_name = Configuration::get('PS_SHOP_NAME');
         $id_shop = $this->context->shop->id;
         $GiftCardName = $this->l('Gift Card');
@@ -1360,7 +1321,6 @@ class giftcard extends Module {
         $GiftCardCurrency = $this->context->currency->sign;
         $GiftCardBackground = $this->_path . 'img/ciseau.png';
         $GiftCardImage = $this->_path . 'img/model.png';
-
         $mail = file_get_contents(_PS_MODULE_DIR_ . 'giftcard/mails/' . $lang . '/preview_mail_gift_card.html');
         $datas = array(
             '#{shop_logo}#',
@@ -1409,8 +1369,7 @@ class giftcard extends Module {
         return $this->_html;
     }
 
-    private function isShipped($id_order) {
-    
+    private function isShipped($id_order) {    
         if (Db::getInstance()->getValue('
             SELECT  COUNT(*)
             FROM `' . _DB_PREFIX_ . 'order_history`
@@ -1421,27 +1380,23 @@ class giftcard extends Module {
         return false;
     }
 
-     private function getShopUrl()
-    {
+     private function getShopUrl() {	 
         $ShopUrl = Db::getInstance()->getRow('
             SELECT domain, domain_ssl, physical_uri, virtual_uri
             FROM `'._DB_PREFIX_.'shop_url`
             WHERE  id_shop = '.$this->context->shop->id);
-
         if(Configuration::get('PS_SSL_ENABLED') || (!empty($_SERVER['HTTPS'])&& strtolower($_SERVER['HTTPS']) != 'off'))
             return 'https://'.$ShopUrl['domain_ssl'].$ShopUrl['physical_uri'].$ShopUrl['virtual_uri'];
         else
             return 'http://'.$ShopUrl['domain'].$ShopUrl['physical_uri'].$ShopUrl['virtual_uri'];
     }
 
-
     public function hookActionPaymentConfirmation($params) {
-        //if (!$this->isShipped($params['id_order']))
+		if (!$this->isShipped($params['id_order']))
             $this->createcard($params['id_order'], $params['cart']->id, $params['cart']->id_customer, $params['cart']->id_currency);
     }
 
-    public static function displayDate($date, $id_lang)
-    {
+    public static function displayDate($date, $id_lang) {	
         $time = strtotime($date);
         $customer_lang = new Language($id_lang);
         $date_format = $customer_lang->date_format_lite;
@@ -1449,7 +1404,6 @@ class giftcard extends Module {
     }
 
     private function createCard($id_order, $id_cart, $id_customer, $id_currency) {
-
         require_once _PS_MODULE_DIR_ . 'giftcard/HTMLTemplateCardPdf.php';
         $order = new order($id_order);
         $sql = Db::getInstance()->executeS('
@@ -1459,9 +1413,8 @@ class giftcard extends Module {
         );
         foreach ($sql as $ids)
             $card_products[] = $ids['id_product'];
-
-        foreach ($order->getProducts() as $product) {
-            if (in_array($product['product_id'], $card_products)) {
+        foreach ($order->getProducts() as $product) {		
+            if (in_array($product['product_id'], $card_products)) {			
                 $id_shop = (int) $this->context->shop->id;
                 $giftcard = GiftCardClass::getByIdProduct($id_shop, $product['product_id']);
                 $display_code = $giftcard->display_code;
@@ -1479,7 +1432,16 @@ class giftcard extends Module {
                 $tax = $giftcard->tax == 0 ? ' ('.$this->l('WT').')' : ' ('.$this->l('ATI').')';
                 $giftcard_data = $this->l('See the conditions of use on the product page') . ': ';
                 $template = 'gift_card';
-                $customer = new Customer($id_customer);
+                $customer = new Customer($id_customer);			
+			/*	
+			// If you want to add the customer in a special groupe after his purchase
+			// change id by the id of your special group
+				$id_special_group = '9999';
+				$customer->cleanGroups();
+				$customer->addGroups(array((int)Configuration::get('PS_CUSTOMER_GROUP')), $id_special_group);
+				$customer->id_default_group = $id_special_group;
+				$customer->update();
+            */ 
                 $giftcardbackground = _PS_BASE_URL_ . __PS_BASE_URI__ . 'modules/giftcard/img/ciseau.png';
                 $title = $this->l('Your Gift Card');
                 $image_path = _PS_MODULE_DIR_ . $this->name . '/img/models/' . $giftcard->image_path;
@@ -1487,12 +1449,12 @@ class giftcard extends Module {
                 $id_product = $product['product_id'];
                 $card_product = new Product($id_product);
                 $url = $this->getShopUrl();                
-                if  ($giftcard->display_duration) {
+                if  ($giftcard->display_duration) {				
                     $date_from = date('Y-m-d');
                     $date_to = date('Y-m-d' , strtotime('+' .$giftcard->duration. 'month'));                    
                     $date_customer_formated = $this->displayDate($date_to, $customer->id_lang);
                     $date_gift = $this->l('Available until :').' '.$date_customer_formated;
-                } else {
+                } else {				
                     $date_from = date('Y-m-d');
                     $date_to = $giftcard->validity;
                     $date_customer_formated = $this->displayDate($date_to, $customer->id_lang);
@@ -1505,17 +1467,10 @@ class giftcard extends Module {
                 $giftcardvalue = Tools::displayPrice(Tools::convertPriceFull($price, null, $currency), $currency);
                 $font1 = _PS_MODULE_DIR_ . 'giftcard/fonts/times.ttf';
                 $font2 = _PS_MODULE_DIR_ . 'giftcard/fonts/code.ttf';
-                $size_code = 40; //fixed
-                
-                if($product['customizedDatas'] > 0) {                   
-                    foreach($product['customizedDatas'] as $customizationPerAddress) {
-                        foreach ($customizationPerAddress as $customizationId => $customization) {
-
-                            $customized_data = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS('
-                            SELECT value
-                            FROM '._DB_PREFIX_.'customized_data 
-                            WHERE id_customization = '.$customizationId);
-
+                $size_code = 40; //fixed                
+                if($product['customizedDatas'] > 0) { 				
+                    foreach($product['customizedDatas'] as $customizationPerAddress) {					
+                        foreach ($customizationPerAddress as $customizationId => $customization) {                            
                             for ($i = 0; $i < $customization ['quantity']; $i++) {                                
                                 $code = $this->GenerateCardCode(8);
                                 $imageView = imagecreatefrompng($image_path);
@@ -1533,20 +1488,18 @@ class giftcard extends Module {
                                     if($color != $colortext2)
                                         imagettftext($imageView, $text_size, 0,   $origin_text['x']+2, $origin_text['y']+2, $colorshadow2, $font1, $giftcardvalue);
                                 if($display_text)                      
-                                    imagettftext($imageView, $text_size, 0, $origin_text['x'], $origin_text['y'], $colortext2, $font1, $giftcardvalue);
-                                
+                                    imagettftext($imageView, $text_size, 0, $origin_text['x'], $origin_text['y'], $colortext2, $font1, $giftcardvalue);                                
                                 imagealphablending($imageView, false);
                                 imagesavealpha($imageView, true);
                                 //Création d'un fichier par custom
                                 imagepng($imageView, _PS_MODULE_DIR_ . 'giftcard/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png');
                                 $giftcardimage = $url.'modules/'.$this->name.'/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png';
-                                imagedestroy($imageView);
-                               
+                                imagedestroy($imageView);                               
                                 $productLink = Context::getContext()->link->getProductLink($card_product->id);
-                                $message = !empty($customized_data[0]['value']) ? $customized_data[0]['value'] : '';
-                                $firstname = !empty($customized_data[1]['value']) ? $customized_data[1]['value'] : $customer->firstname;
-                                $lastname = !empty($customized_data[2]['value']) ? $customized_data[2]['value'] : $customer->lastname;
-                                $email = !empty($customized_data[3]['value']) ? $customized_data[3]['value']: $customer->email;
+                                $message = $customization['datas'][1][0]['value'];
+                                $firstname = $customization['datas'][1][1]['value'];
+                                $lastname = $customization['datas'][1][2]['value'];
+                                $email = !empty($customization['datas'][1][3]['value']) ? $customization['datas'][1][3]['value']: $customer->email;                              
                                 $products_data = '';
                                 $products_data .='<p>' . $message . '</p><br /><br /><p><span style="font-weight:bold;">' . $giftcard_data . '</span><a href="' . $productLink . '">  ' . $product['product_name'] . '</a></p><br /><br />';
                                 $datas = array(
@@ -1560,12 +1513,11 @@ class giftcard extends Module {
                                    '{GiftCardBackground}' => $giftcardbackground,
                                    '{GiftCardConditions}' => $GiftCardConditions,
                                    '{GiftCardTax}' => $tax,
-                                   '{GiftCardDatas}' => $products_data
+                                   '{GiftCardDatas}' => $products_data,
+								   '{from}' => $customer->firstname.' '.$customer->lastname
                                 );
-
-                                $template = 'gift_card';
-                                
-                                if(!empty($customized_data[3]['value'])) {
+                                $template = 'mail_gift_card';                                
+                                if($email != $customer->email) {								
                                     $eol = "\r\n";
                                     $headers = 'From: ' . Configuration::get('PS_SHOP_NAME') . ' <' . Configuration::get('PS_SHOP_EMAIL'). '>' . $eol;
                                     $headers .= 'Reply-To: ' . Configuration::get('PS_SHOP_NAME') . ' <' . Configuration::get('PS_SHOP_EMAIL') . '>' . $eol;
@@ -1573,18 +1525,14 @@ class giftcard extends Module {
                                     $headers .= 'X-Mailer: PHP v ' . phpversion() . $eol;
                                     $headers .= "Content-Transfer-Encoding: 7bit" . $eol . $eol;
                                     mail($customer->email, utf8_decode($this->l('Gift Card send !')), utf8_decode($this->l('Your Gift Card has been sent to:')).' '.$email, $headers);
-                                    $template = 'mail_gift_card';
-                                    $gift_datas = array( '{from}' => $customer->firstname.' '.$customer->lastname);
-                                    $datas = array_merge($datas, $gift_datas);
                                 }
-
-                                $order->cardimage = $giftcardimage;
+                                $order->cardimage = dirname(__FILE__).'/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png';
                                 $order->title = $this->l('Your Gift Card');
                                 $order->conditions = $GiftCardConditions;
                                 $pdf = new PDF($order, 'CardPdf', Context::getContext()->smarty);
                                 ob_end_clean();
                                 $file_attachement['content'] = $pdf->render(false);
-                                $file_attachement['name'] = 'giftcard.pdf';
+                                $file_attachement['name'] = 'my_giftcard.pdf';
                                 $file_attachement['mime'] = 'application/pdf';
                                 Mail::Send((int) Context::getContext()->language->id, $template, $title, $datas, $email, null, null, null, $file_attachement, null, dirname(__FILE__) . '/mails/');
                                 $cart_rule = new CartRule();
@@ -1605,15 +1553,13 @@ class giftcard extends Module {
                                 $cart_rule->minimum_amount_currency = 1;
                                 $cart_rule->reduction_currency = 1;
                                 $cart_rule->reduction_amount = round((float)$voucher_price, 2);
-                                $cart_rule->add();
-                                
+                                $cart_rule->add();                                
                                 StockAvailable::updateQuantity($product['product_id'], 0, 1, $id_shop);
                             }
                         }
                     }
                 }
                 if($classic > 0) { 
-
                     for ($i = 0; $i < $classic; $i++) {                                               
                         $code = $this->GenerateCardCode(8);
                         $imageView = imagecreatefrompng($image_path);
@@ -1631,21 +1577,20 @@ class giftcard extends Module {
                             if($color != $colortext2)
                                 imagettftext($imageView, $text_size, 0,   $origin_text['x']+2, $origin_text['y']+2, $colorshadow2, $font1, $giftcardvalue);
                         if($display_text)                      
-                            imagettftext($imageView, $text_size, 0, $origin_text['x'], $origin_text['y'], $colortext2, $font1, $giftcardvalue);
-                        
+                            imagettftext($imageView, $text_size, 0, $origin_text['x'], $origin_text['y'], $colortext2, $font1, $giftcardvalue);                        
                         imagealphablending($imageView, false);
                         imagesavealpha($imageView, true);
                         //Création d'un fichier par carte
                         imagepng($imageView, _PS_MODULE_DIR_ . 'giftcard/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png');
                         $giftcardimage = $url.'modules/'.$this->name.'/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png';
-                        imagedestroy($imageView);
-                         
+                        imagedestroy($imageView);                      
                         $productLink = Context::getContext()->link->getProductLink($card_product->id);
                         $firstname = $customer->firstname;
                         $lastname = $customer->lastname;
                         $email = $customer->email;
                         $products_data = '';
                         $products_data .='<p></p><br /><br /><p><span style="font-weight:bold;">' . $giftcard_data . '</span><a href="' . $productLink . '">  ' . $product['product_name'] . '</a></p><br /><br />';
+                        $my_vouchers = Context::getContext()->link->getPageLink('discount', true, Context::getContext()->language->id, null, false, $id_shop);
                         $datas = array(
                             '{firstname}' => $firstname,
                             '{lastname}' => $lastname,
@@ -1657,16 +1602,16 @@ class giftcard extends Module {
                             '{GiftCardBackground}' => $giftcardbackground,
                             '{GiftCardConditions}' => $GiftCardConditions,
                             '{GiftCardTax}' => $tax,
-                            '{GiftCardDatas}' => $products_data
+                            '{GiftCardDatas}' => $products_data,
+                            '{my_vouchers}' => $my_vouchers
                         );
-
-                        $order->cardimage = $giftcardimage;
+                        $order->cardimage = dirname(__FILE__).'/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png';  
                         $order->title = $this->l('Your Gift Card');
                         $order->conditions = $GiftCardConditions;
                         $pdf = new PDF($order, 'CardPdf', Context::getContext()->smarty);
                         ob_end_clean();
                         $file_attachement['content'] = $pdf->render(false);
-                        $file_attachement['name'] = 'giftcard.pdf';
+                        $file_attachement['name'] = 'my_giftcard.pdf';
                         $file_attachement['mime'] = 'application/pdf';
                         $template = 'gift_card';
                         Mail::Send((int) Context::getContext()->language->id, $template, $title, $datas, $email, null, null, null, $file_attachement, null, dirname(__FILE__) . '/mails/');
@@ -1676,6 +1621,10 @@ class giftcard extends Module {
                             $cart_rule->name[$lang['id_lang']] = $cart_rule_name;
                         }
                         $cart_rule->description = $cart_rule_name;
+                        if ($giftcard->highlight) {
+                            $cart_rule->id_customer = $customer->id;
+                            $cart_rule->highlight = 1;
+                        }
                         $cart_rule->code = $code;
                         $cart_rule->active = 1;
                         $cart_rule->date_from = $date_from;
@@ -1688,12 +1637,11 @@ class giftcard extends Module {
                         $cart_rule->minimum_amount_currency = 1;
                         $cart_rule->reduction_currency = 1;
                         $cart_rule->reduction_amount = round((float)$voucher_price, 2);
-                        $cart_rule->add();
-    
+                        $cart_rule->add();    
                         StockAvailable::updateQuantity($product['product_id'], 0, 1, $id_shop);
                     } 
                 }              
             }
-        }/*d($i);*/ /* end test*/
+        }
     }
 }
