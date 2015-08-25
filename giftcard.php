@@ -12,7 +12,7 @@ class giftcard extends Module {
     public function __construct() {
         $this->name = 'giftcard';
         $this->tab = 'front_office_features';
-        $this->version = '3.2.4';
+        $this->version = '3.2.5';
         $this->author = 'Loulou66 and Eolia';
         $this->need_instance = 0;
         $this->_path = dirname(__FILE__);
@@ -550,6 +550,7 @@ class giftcard extends Module {
                         'name' => 'duration',
                         'align' => 'text-center',
                         'class' => 'fixed-width-xxl',
+                        'required' => true,
                         'desc' => $this->l('Enter the number of months of duration after the receipt of gift cards (by Email).'),
                         'hint' => $this->l('Enter the number of months of duration after the receipt of gift cards (by Email).'),
                         'form_group_class'  => 'display_duration_group'
@@ -1169,7 +1170,12 @@ class giftcard extends Module {
             } else {			
                 $duration = ''; 
                 $validity = Tools::getValue('validity');
-            }           
+            }
+            if (empty($duration) && empty($validity)) {
+               $display_duration = 1;
+               $duration = 3;
+               $validity = '';
+            }            
             $tax = Tools::getValue('tax');
             $partial_use = Tools::getValue('partial_use');
             $highlight = Tools::getValue('highlight');
@@ -1207,13 +1213,17 @@ class giftcard extends Module {
             } else
                 $giftcard->image_path = Tools::getValue('model');
             $giftcard->display_duration = Tools::getValue('display_duration');    
-            if (Tools::getValue('display_duration') == 1) {			
+            if ($giftcard->display_duration) {			
                 $giftcard->duration = (int)Tools::getValue('duration'); 
-                $giftcard->validity = $this->l('Date of mailing of the card by Email').' +'.$giftcard->duration.' '.$this->l('Month');
+                $giftcard->validity = '';
             } else {
                 $giftcard->duration = ''; 
                 $giftcard->validity = Tools::getValue('validity');
-            } 
+            }           
+             if (empty($giftcard->duration) && empty($giftcard->validity)) {
+               $giftcard->display_duration = 1;
+               $giftcard->duration = 3;
+            }
             $giftcard->display_code = Tools::getValue('display_code');
             $giftcard->pos_code_x =  Tools::getValue('pos_code_x');
             $giftcard->pos_code_y =  Tools::getValue('pos_code_y');
@@ -1237,8 +1247,12 @@ class giftcard extends Module {
             }
             $price = ($giftcard->tax == 1) ? (100 * $new_price) / (100 + $this->getTaxRate()) : $new_price;
             $product->price = round((float)$price,6);
-            $price = Tools::displayPrice($product->price, $currency, false, $this->context); 
-            $product->description_short = $partial.'.<br/>'.$this->l('The amount value will be use only in').' '.$usetax.'.<br/>'.$this->l('Available until').': '.$giftcard->validity;
+            $price = Tools::displayPrice($product->price, $currency, false, $this->context);
+            if ($giftcard->display_duration)
+                $desc_validity =  $this->l('Date of mailing of the card by Email').' +'.$giftcard->duration.' '.$this->l('Month');
+            else
+                $desc_validity = Tools::displayDate($giftcard->validity);   
+            $product->description_short = $partial.'.<br/>'.$this->l('The amount value will be use only in').' '.$usetax.'.<br/>'.$this->l('Available until').': '.$desc_validity;
             $product->update();
             $nameImport = _PS_MODULE_DIR_ . $this->name . '/img/models/';
             $image_path = $nameImport . $giftcard->image_path;
