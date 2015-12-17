@@ -12,7 +12,7 @@ class giftcard extends Module {
     public function __construct() {
         $this->name = 'giftcard';
         $this->tab = 'front_office_features';
-        $this->version = '3.2.5';
+        $this->version = '3.2.7';
         $this->author = 'Loulou66 and Eolia';
         $this->need_instance = 0;
         $this->_path = dirname(__FILE__);
@@ -1392,7 +1392,7 @@ class giftcard extends Module {
     }
 
     public function hookActionPaymentConfirmation($params) {
-		if (!$this->isShipped($params['id_order']))
+		if (!$this->isShipped($params['id_order']))        
             $this->createcard($params['id_order'], $params['cart']->id, $params['cart']->id_customer, $params['cart']->id_currency);
     }
 
@@ -1404,12 +1404,12 @@ class giftcard extends Module {
     }
 
     private function createCard($id_order, $id_cart, $id_customer, $id_currency) {
-        require_once _PS_MODULE_DIR_ . 'giftcard/HTMLTemplateCardPdf.php';
+        require_once _PS_MODULE_DIR_.'giftcard/HTMLTemplateCardPdf.php';
         $order = new order($id_order);
         $sql = Db::getInstance()->executeS('
             SELECT  `id_product`
-            FROM `' . _DB_PREFIX_ . 'giftcard`
-            WHERE `id_shop`= ' . (int) $this->context->shop->id
+            FROM `'._DB_PREFIX_.'giftcard`
+            WHERE `id_shop`= '.(int) $this->context->shop->id
         );
         foreach ($sql as $ids)
             $card_products[] = $ids['id_product'];
@@ -1417,6 +1417,7 @@ class giftcard extends Module {
             if (in_array($product['product_id'], $card_products)) {			
                 $id_shop = (int) $this->context->shop->id;
                 $giftcard = GiftCardClass::getByIdProduct($id_shop, $product['product_id']);
+                $customer = new Customer($id_customer);
                 $display_code = $giftcard->display_code;
                 $pos_code_x = $giftcard->pos_code_x;
                 $pos_code_y = $giftcard->pos_code_y;
@@ -1428,23 +1429,13 @@ class giftcard extends Module {
                 $pos_text_y = $giftcard->pos_text_y;
                 $text_size = $giftcard->text_size;
                 $colortext = $giftcard->colortext;                
-                $GiftCardConditions = ($giftcard->partial_use == 0) ? $this->l('This voucher must be used in one time') : $this->l('This voucher can be used several times (as long as the balance is positive)');
-                $tax = $giftcard->tax == 0 ? ' ('.$this->l('WT').')' : ' ('.$this->l('ATI').')';
-                $giftcard_data = $this->l('See the conditions of use on the product page') . ': ';
-                $template = 'gift_card';
-                $customer = new Customer($id_customer);			
-			/*	
-			// If you want to add the customer in a special groupe after his purchase
-			// change id by the id of your special group
-				$id_special_group = '9999';
-				$customer->cleanGroups();
-				$customer->addGroups(array((int)Configuration::get('PS_CUSTOMER_GROUP')), $id_special_group);
-				$customer->id_default_group = $id_special_group;
-				$customer->update();
-            */ 
-                $giftcardbackground = _PS_BASE_URL_ . __PS_BASE_URI__ . 'modules/giftcard/img/ciseau.png';
-                $title = $this->l('Your Gift Card');
-                $image_path = _PS_MODULE_DIR_ . $this->name . '/img/models/' . $giftcard->image_path;
+                $GiftCardConditions = ($giftcard->partial_use == 0) ? $this->lgc('This voucher must be used in one time', $customer->id_lang) : $this->lgc('This voucher can be used several times (as long as the balance is positive)', $customer->id_lang);
+                $tax = $giftcard->tax == 0 ? ' ('.$this->lgc('WT', $customer->id_lang).')' : ' ('.$this->lgc('ATI', $customer->id_lang).')';
+                $pdftextcontent = $this->lgc('This card is only available on', $customer->id_lang);
+                $pdftextfooter = $this->lgc('For more assistance, contact Support:', $customer->id_lang);
+                $giftcard_data = $this->lgc('See the conditions of use on the product page', $customer->id_lang).': ';  
+                $giftcardbackground = _PS_BASE_URL_.__PS_BASE_URI__.'modules/giftcard/img/ciseau.png';                
+                $image_path = _PS_MODULE_DIR_.$this->name.'/img/models/'.$giftcard->image_path;
                 $product_quantity = $product['product_quantity'];
                 $id_product = $product['product_id'];
                 $card_product = new Product($id_product);
@@ -1453,22 +1444,22 @@ class giftcard extends Module {
                     $date_from = date('Y-m-d');
                     $date_to = date('Y-m-d' , strtotime('+' .$giftcard->duration. 'month'));                    
                     $date_customer_formated = $this->displayDate($date_to, $customer->id_lang);
-                    $date_gift = $this->l('Available until :').' '.$date_customer_formated;
+                    $date_gift = $this->lgc('Available until :', $customer->id_lang).' '.$date_customer_formated;
                 } else {				
                     $date_from = date('Y-m-d');
                     $date_to = $giftcard->validity;
                     $date_customer_formated = $this->displayDate($date_to, $customer->id_lang);
-                    $date_gift = $this->l('Available until :').' '.$date_customer_formated;
+                    $date_gift = $this->lgc('Available until :').' '.$date_customer_formated;
                 }   
                 $classic = (int)$product['product_quantity'] - (int)$product['customizationQuantityTotal'];
                 $giftcardname = $product['product_name'];
                 $currency = new Currency($id_currency);
                 $price =  ($giftcard->tax == 1) ? $card_product->price *((100 + $this->getTaxRate())/100) : $card_product->price;
                 $giftcardvalue = Tools::displayPrice(Tools::convertPriceFull($price, null, $currency), $currency);
-                $font1 = _PS_MODULE_DIR_ . 'giftcard/fonts/times.ttf';
-                $font2 = _PS_MODULE_DIR_ . 'giftcard/fonts/code.ttf';
-                $size_code = 40; //fixed                
-                if($product['customizedDatas'] > 0) { 				
+                $font1 = _PS_MODULE_DIR_.'giftcard/fonts/times.ttf';
+                $font2 = _PS_MODULE_DIR_.'giftcard/fonts/code.ttf'; 
+                $size_code = 40; //fixed
+                if(!empty($product['customizedDatas'])) { 				
                     foreach($product['customizedDatas'] as $customizationPerAddress) {					
                         foreach ($customizationPerAddress as $customizationId => $customization) {                            
                             for ($i = 0; $i < $customization ['quantity']; $i++) {                                
@@ -1492,16 +1483,16 @@ class giftcard extends Module {
                                 imagealphablending($imageView, false);
                                 imagesavealpha($imageView, true);
                                 //Création d'un fichier par custom
-                                imagepng($imageView, _PS_MODULE_DIR_ . 'giftcard/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png');
+                                imagepng($imageView, _PS_MODULE_DIR_.'giftcard/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png');
                                 $giftcardimage = $url.'modules/'.$this->name.'/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png';
                                 imagedestroy($imageView);                               
                                 $productLink = Context::getContext()->link->getProductLink($card_product->id);
                                 $message = $customization['datas'][1][0]['value'];
                                 $firstname = $customization['datas'][1][1]['value'];
                                 $lastname = $customization['datas'][1][2]['value'];
-                                $email = !empty($customization['datas'][1][3]['value']) ? $customization['datas'][1][3]['value']: $customer->email;                              
+                                $email = !empty($customization['datas'][1][3]['value']) ? $customization['datas'][1][3]['value'] : $customer->email;                              
                                 $products_data = '';
-                                $products_data .='<p>' . $message . '</p><br /><br /><p><span style="font-weight:bold;">' . $giftcard_data . '</span><a href="' . $productLink . '">  ' . $product['product_name'] . '</a></p><br /><br />';
+                                $products_data .='<p>'.$message.'</p><br /><br /><p><span style="font-weight:bold;">'.$giftcard_data.'</span><a href="'.$productLink.'">  '.$product['product_name'].'</a></p><br /><br />';
                                 $datas = array(
                                    '{firstname}' => $firstname,
                                    '{lastname}' => $lastname,
@@ -1515,26 +1506,27 @@ class giftcard extends Module {
                                    '{GiftCardTax}' => $tax,
                                    '{GiftCardDatas}' => $products_data,
 								   '{from}' => $customer->firstname.' '.$customer->lastname
-                                );
-                                $template = 'mail_gift_card';                                
-                                if($email != $customer->email) {								
-                                    $eol = "\r\n";
-                                    $headers = 'From: ' . Configuration::get('PS_SHOP_NAME') . ' <' . Configuration::get('PS_SHOP_EMAIL'). '>' . $eol;
-                                    $headers .= 'Reply-To: ' . Configuration::get('PS_SHOP_NAME') . ' <' . Configuration::get('PS_SHOP_EMAIL') . '>' . $eol;
-                                    $headers .= 'Return-Path: ' . Configuration::get('PS_SHOP_NAME') . ' <' . Configuration::get('PS_SHOP_EMAIL') . '>' . $eol;
-                                    $headers .= 'X-Mailer: PHP v ' . phpversion() . $eol;
-                                    $headers .= "Content-Transfer-Encoding: 7bit" . $eol . $eol;
-                                    mail($customer->email, utf8_decode($this->l('Gift Card send !')), utf8_decode($this->l('Your Gift Card has been sent to:')).' '.$email, $headers);
+                                );                                                                
+                                
+                                if ($email != $customer->email) {
+                                    $template1 = 'conf_card_sent'; 
+                                    $title1 =  $this->lgc('Gift Card send !', $customer->id_lang);        
+                                    $message_confirm = $this->lgc('Your Gift Card has been sent to:', $customer->id_lang).' '.$email;
+                                    Mail::Send((int)$customer->id_lang,  $template1, $title1, array('{message_confirm}' => $message_confirm,), $customer->email, null, null, null, null, null, dirname(__FILE__) . '/mails/');
                                 }
                                 $order->cardimage = dirname(__FILE__).'/cards/Order-'. $order->id.'-Product-'.$product['product_id'].'-Custom-'.$customizationId.'-'.$i.'.png';
-                                $order->title = $this->l('Your Gift Card');
+                                $order->title = $title;
+                                $order->pdftextcontent = $pdftextcontent;
+                                $order->pdftextfooter = $pdftextfooter;
                                 $order->conditions = $GiftCardConditions;
                                 $pdf = new PDF($order, 'CardPdf', Context::getContext()->smarty);
                                 ob_end_clean();
                                 $file_attachement['content'] = $pdf->render(false);
                                 $file_attachement['name'] = 'my_giftcard.pdf';
                                 $file_attachement['mime'] = 'application/pdf';
-                                Mail::Send((int) Context::getContext()->language->id, $template, $title, $datas, $email, null, null, null, $file_attachement, null, dirname(__FILE__) . '/mails/');
+                                $template2 = 'mail_gift_card';
+                                $title2 = $this->lgc('Your Gift Card', $customer->id_lang);
+                                Mail::Send((int)$customer->id_lang, $template2, $title2, $datas, $email, null, null, null, $file_attachement, null, dirname(__FILE__) . '/mails/');
                                 $cart_rule = new CartRule();
                                 $cart_rule_name = $product['product_name'];
                                 foreach (Language::getLanguages(false) as $lang) {
@@ -1580,8 +1572,7 @@ class giftcard extends Module {
                             imagettftext($imageView, $text_size, 0, $origin_text['x'], $origin_text['y'], $colortext2, $font1, $giftcardvalue);                        
                         imagealphablending($imageView, false);
                         imagesavealpha($imageView, true);
-                        //Création d'un fichier par carte
-                        imagepng($imageView, _PS_MODULE_DIR_ . 'giftcard/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png');
+                        imagepng($imageView, _PS_MODULE_DIR_.'giftcard/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png');
                         $giftcardimage = $url.'modules/'.$this->name.'/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png';
                         imagedestroy($imageView);                      
                         $productLink = Context::getContext()->link->getProductLink($card_product->id);
@@ -1589,7 +1580,7 @@ class giftcard extends Module {
                         $lastname = $customer->lastname;
                         $email = $customer->email;
                         $products_data = '';
-                        $products_data .='<p></p><br /><br /><p><span style="font-weight:bold;">' . $giftcard_data . '</span><a href="' . $productLink . '">  ' . $product['product_name'] . '</a></p><br /><br />';
+                        $products_data .='<p></p><br /><br /><p><span style="font-weight:bold;">'.$giftcard_data.'</span><a href="'.$productLink.'">'.$product['product_name'].'</a></p><br /><br />';
                         $my_vouchers = Context::getContext()->link->getPageLink('discount', true, Context::getContext()->language->id, null, false, $id_shop);
                         $datas = array(
                             '{firstname}' => $firstname,
@@ -1606,15 +1597,18 @@ class giftcard extends Module {
                             '{my_vouchers}' => $my_vouchers
                         );
                         $order->cardimage = dirname(__FILE__).'/cards/Order-'.$order->id.'Product-'.$product['product_id'].'.png';  
-                        $order->title = $this->l('Your Gift Card');
+                        $order->title = $title;
+                        $order->pdftextcontent = $pdftextcontent;
+                        $order->pdftextfooter = $pdftextfooter;
                         $order->conditions = $GiftCardConditions;
                         $pdf = new PDF($order, 'CardPdf', Context::getContext()->smarty);
                         ob_end_clean();
                         $file_attachement['content'] = $pdf->render(false);
                         $file_attachement['name'] = 'my_giftcard.pdf';
                         $file_attachement['mime'] = 'application/pdf';
-                        $template = 'gift_card';
-                        Mail::Send((int) Context::getContext()->language->id, $template, $title, $datas, $email, null, null, null, $file_attachement, null, dirname(__FILE__) . '/mails/');
+                        $template3 = 'gift_card';
+                        $title3 = $this->lgc('Your Gift Card', $customer->id_lang);
+                        Mail::Send((int)$customer->id_lang, $template3, $title3, $datas, $email, null, null, null, $file_attachement, null, dirname(__FILE__).'/mails/');
                         $cart_rule = new CartRule();
                         $cart_rule_name = $product['product_name'];
                         foreach (Language::getLanguages(false) as $lang) {
@@ -1644,4 +1638,48 @@ class giftcard extends Module {
             }
         }
     }
+    /* translation only for email and pdf in customer language */
+    public static function lgc($string, $id_lang) {
+        global $_MODULE;
+        $iso = Language::getIsoById((int)$id_lang);
+        $name = 'giftcard';
+        $filesByPriority = array(                               
+            _PS_MODULE_DIR_.$name.'/translations/'.$iso.'.php',
+            // Translations in theme
+            _PS_THEME_DIR_.'modules/'.$name.'/translations/'.$iso.'.php'
+        );
+        foreach ($filesByPriority as $file)             
+            include_once($file);      
+
+        $key = md5(str_replace('\'', '\\\'', $string));
+        $cache_key = $name.'|'.$string;
+        $theme_key = strtolower('<{'.$name.'}'._THEME_NAME_.'>'.$name).'_'.$key;
+        $module_key = strtolower('<{'.$name.'}prestashop>'.$name).'_'.$key;
+        if (isset($_MODULE[$$theme_key]))
+            $ret = stripslashes($_MODULE[$theme_key]);
+        elseif (isset($_MODULE[$module_key]))
+            $ret = stripslashes($_MODULE[$module_key]);
+        else
+            $ret = $string;        
+        return $ret;
+    }
+
+    public static function defaultTrans() {
+        /* this fonction is nerver call */
+        /* add here all line with $this->lgc('....') for the normal translate fonction in BO */
+        $trans = array(
+            $this->l('This voucher must be used in one time'),
+            $this->l('This voucher can be used several times (as long as the balance is positive)'),
+            $this->l('WT'),
+            $this->l('ATI'),
+            $this->l('This card is only available on'),
+            $this->l('For more assistance, contact Support:'),
+            $this->l('See the conditions of use on the product page'),
+            $this->l('Your Gift Card'),
+            $this->l('Available until :'),
+            $this->l('Gift Card send !'),
+            $this->l('Your Gift Card has been sent to:'),
+        );
+    }
+
 }
