@@ -1392,7 +1392,7 @@ class giftcard extends Module {
     }
 
     public function hookActionPaymentConfirmation($params) {
-		//if (!$this->isShipped($params['id_order']))        
+		if (!$this->isShipped($params['id_order']))        
             $this->createcard($params['id_order'], $params['cart']->id, $params['cart']->id_customer, $params['cart']->id_currency);
     }
 
