@@ -11,9 +11,10 @@ class HTMLTemplateCardPdf extends HTMLTemplate
 		$this->order = $giftcard_object;
 		$this->shop = new Shop((int)$this->order->id_shop);		
         $this->smarty = $smarty;
-		$this->title = $giftcard_object->title;
-		$this->conditions = $giftcard_object->conditions;
-
+		$this->title = $giftcard_object->title;		
+        $this->pdftextcontent = $giftcard_object->pdftextcontent;
+        $this->pdftextfooter = $giftcard_object->pdftextfooter;
+        $this->conditions = $giftcard_object->conditions;
     }
 	
     public function getHeader()
@@ -34,9 +35,9 @@ class HTMLTemplateCardPdf extends HTMLTemplate
 			'date' => date('d/m/Y'),
 			'shop_name' => $shop_name,
 			'width_logo' => $width,
-			'height_logo' => $height
+			'height_logo' => $height,
 		));	
-        return $this->smarty->fetch(_PS_MODULE_DIR_ . 'giftcard/pdf/giftcard_header.tpl');
+        return $this->smarty->fetch(_PS_MODULE_DIR_.'giftcard/pdf/giftcard_header.tpl');
     }
     /**
      * Returns the template's HTML content
@@ -46,10 +47,11 @@ class HTMLTemplateCardPdf extends HTMLTemplate
     {
         $this->smarty->assign(array(
             'image' => $this->image,
-			'conditions' => $this->conditions
+			'conditions' => $this->conditions,
+            'pdftextcontent' => $this->pdftextcontent,
         ));
 
-        return $this->smarty->fetch(_PS_MODULE_DIR_ . 'giftcard/pdf/giftcard_content.tpl');
+        return $this->smarty->fetch(_PS_MODULE_DIR_.'giftcard/pdf/giftcard_content.tpl');
     }
 
 	public function getFooter()
@@ -60,9 +62,10 @@ class HTMLTemplateCardPdf extends HTMLTemplate
 			'shop_fax' => Configuration::get('PS_SHOP_FAX', null, null, (int)$this->order->id_shop),
 			'shop_phone' => Configuration::get('PS_SHOP_PHONE', null, null, (int)$this->order->id_shop),
 			'shop_details' => Configuration::get('PS_SHOP_DETAILS', null, null, (int)$this->order->id_shop),
+            'pdftextfooter' => $this->pdftextfooter,
 		));
 
-		return $this->smarty->fetch(_PS_MODULE_DIR_ . 'giftcard/pdf/giftcard_footer.tpl');
+		return $this->smarty->fetch(_PS_MODULE_DIR_.'giftcard/pdf/giftcard_footer.tpl');
 	}
     /**
      * Returns the template filename

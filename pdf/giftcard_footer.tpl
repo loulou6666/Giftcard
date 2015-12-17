@@ -6,7 +6,7 @@
 			{$shop_address}<br />
 
 			{if !empty($shop_phone) OR !empty($shop_fax)}
-				{l s='For more assistance, contact Support:' pdf='true'}<br />
+				{$pdftextfooter}<br />
 				{if !empty($shop_phone)}
 					Tel: {$shop_phone|escape:'html':'UTF-8'}
 				{/if}
