@@ -1,18 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/1999/REC-html401-19991224/strict.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />		
+</head>
+<body style="-webkit-text-size-adjust:none;background-color:#fff;width:950px;font-family:Open-sans, sans-serif;color:#555454;font-size:13px;line-height:18px;margin:auto">
 	<table style="width:100%;margin-top:10px;">
 		<tr>
 			<td align="center" style="padding:7px 0">
 				<table bgcolor="#ffffff" style="width:100%">
 					<tr>
-						<td align="center" style="border-bottom:4px solid #333333;padding:7px 0"><a title="{shop_name}" href="{shop_url}" style="color:#337ff1"><img src="{shop_logo}" alt="{shop_name}" /></a></td>
+						<td align="center" style="border-bottom:4px solid #333333;padding:7px 0"><a title="{shop_name}" href="{shop_url}" style="color:#337ff1"><img src="{shop_logo}" style ="border:none" alt="{shop_name}" /></a></td>
 					</tr>
 					<tr>
-						<td align="center" style="padding:7px 0"><span class="title" style="font-weight:500;font-size:28px;text-transform:uppercase;line-height:33px">Bonjour {firstname} {lastname},</span><br	/></td>
+						<td align="center" style="padding:7px 0"><span class="title" style="font-weight:500;font-size:28px;text-transform:uppercase;line-height:33px">Hallo {firstname} {lastname},</span><br	/></td>
 					</tr>
 					<tr>
-						<td style="padding:0!important"><span style="font-weight:500;font-size:16px;text-transform:uppercase;line-height:25px;text-align:left;padding-left: 15px;">Suite &agrave; votre achat sur notre boutique, voici la {GiftCardName} que vous avez command&eacute;.</span></td>
+						<td style="padding:0!important"><span style="font-weight:500;font-size:16px;text-transform:uppercase;line-height:25px;text-align:left;padding-left: 15px;">Anbei finden Sie einen Geschenkgutschein von {from}.</span></td>
 					</tr>
 					<tr>
 						<td style="padding:0!important">&nbsp;</td>
+					</tr>
+					<tr>
+						<td style="padding:0!important"><span style="font-weight:900;font-size:16px;text-transform:uppercase;line-height:25px;text-align:left;padding-left: 15px;">{GiftCardConditions}</span></td>
 					</tr>
 					<tr>
 						<table  style="width:915px">
@@ -27,17 +37,17 @@
 										<tr>
 											<td style="position: relative; width: 450px; background: none repeat scroll 0% 0% rgb(204, 204, 204); height: 275px !important; border: 1px solid black; border-radius: 20px 0px 0px 20px;">
 												<table style="padding-left: 10px; padding-right: 10px;">
-												<tr style="height:185px !important; font-family: Verdana,sans-serif;font-size: 11px;">													
+												<tr style="height:185px !important; font-family: Verdana,sans-serif;font-size: 11px;">	
 													<td style="padding-top: 10px;">{GiftCardDatas}</td>														
 												</tr>
 												<tr>
 													<td style="background: none repeat scroll 0% 0% black; display: block;"><span style="font-weight: bold; font-size: 12px; color: white;">Code : </span><span style="font-weight: bold; font-size: 15px; color: white;">{GiftCardCode}</span></td>
 												</tr>
 												<tr>
-													<td style="font-style: italic;">Cette Carte-Cadeau d&#039;une valeur de {GiftCardValue}{GiftCardTax} est utilisable exclusivement sur le site <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
+													<td style="font-style: italic;">Dieser Gutschein ist nur einlösbar bei <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
 												</tr>
 												<tr>
-													<td style="font-style: italic;">Valable jusqu&#039;au {GiftCardDate}.</td>
+													<td style="font-style: italic;">Gültig bis {GiftCardDate}.</td>
 												</tr>
 												</table>
 											</td>									
@@ -45,12 +55,6 @@
 										</tr>
 									</table>
 								</td>
-							</tr>
-							<tr>
-								<td align="left">Vous pouvez acc&eacute;der au suivi de votre commande et t&eacute;l&eacute;charger votre facture dans <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{history_url}">"Historique des commandes"</a> de la rubrique <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{my_account_url}">"Mon compte"</a> sur notre site.</td>
-							</tr>
-							<tr>
-								<td align="left">Si vous avez un compte invit&eacute;, vous pouvez suivre votre commande dans la section <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{guest_tracking_url}">"Suivi invit&eacute;"</a> de notre site.</td>
 							</tr>
 							<tr>
 								<td style="font-size: 10px; border-top: 1px solid #D9DADE;" align="center"><a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
@@ -61,3 +65,5 @@
 			</td>								
 		</tr>
 	</table>
+</body>
+</html>

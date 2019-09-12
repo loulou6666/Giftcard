@@ -1,0 +1,5 @@
+Hallo {firstname} {lastname},
+
+{message_confirm}
+
+{shop_name} - {shop_url}

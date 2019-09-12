@@ -1,0 +1,14 @@
+{GiftCardDesc}
+
+Hallo {firstname} {lastname},
+
+Nachfolgend zu Ihrer Bestellung in unserem Webshop erhalten Sie hiermit den von Ihnen bestellten Gutschein. 
+{GiftCardConditions}
+
+{GiftCardDatas}
+
+Code: {GiftCardCode} 
+Dieser Gutschein ist nur einlösbar bei {shop_name}. 
+Gültig bis {GiftCardDate}.
+
+{shop_name} - {shop_url}

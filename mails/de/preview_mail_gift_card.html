@@ -6,10 +6,10 @@
 						<td align="center" style="border-bottom:4px solid #333333;padding:7px 0"><a title="{shop_name}" href="{shop_url}" style="color:#337ff1"><img src="{shop_logo}" alt="{shop_name}" /></a></td>
 					</tr>
 					<tr>
-						<td align="center" style="padding:7px 0"><span class="title" style="font-weight:500;font-size:28px;text-transform:uppercase;line-height:33px">Bonjour {firstname} {lastname},</span><br	/></td>
+						<td align="center" style="padding:7px 0"><span class="title" style="font-weight:500;font-size:28px;text-transform:uppercase;line-height:33px">Hallo {firstname} {lastname},</span><br	/></td>
 					</tr>
 					<tr>
-						<td style="padding:0!important"><span style="font-weight:500;font-size:16px;text-transform:uppercase;line-height:25px;text-align:left;padding-left: 15px;">Suite &agrave; votre achat sur notre boutique, voici la {GiftCardName} que vous avez command&eacute;.</span></td>
+						<td style="padding:0!important"><span style="font-weight:500;font-size:16px;text-transform:uppercase;line-height:25px;text-align:left;padding-left: 15px;">Nachfolgend zu Ihrer Bestellung in unserem Webshop erhalten Sie hiermit die von Ihnen bestellte {GiftCardName}.</span></td>
 					</tr>
 					<tr>
 						<td style="padding:0!important">&nbsp;</td>
@@ -25,7 +25,7 @@
 								<td style="border: 1px dashed rgb(0, 0, 0); border-collapse: collapse; border-radius: 20px; padding:3px 3px;">
 									<table>
 										<tr>
-											<td style="position: relative; width: 450px; background: none repeat scroll 0% 0% rgb(204, 204, 204); height: 275px !important; border: 1px solid black; border-radius: 20px 0px 0px 20px;">
+											<td style="position: relative; width: 450px;background: none repeat scroll 0% 0% rgb(204, 204, 204); height: 275px !important; border: 1px solid black; border-radius: 20px 0px 0px 20px;">
 												<table style="padding-left: 10px; padding-right: 10px;">
 												<tr style="height:185px !important; font-family: Verdana,sans-serif;font-size: 11px;">													
 													<td style="padding-top: 10px;">{GiftCardDatas}</td>														
@@ -34,10 +34,10 @@
 													<td style="background: none repeat scroll 0% 0% black; display: block;"><span style="font-weight: bold; font-size: 12px; color: white;">Code : </span><span style="font-weight: bold; font-size: 15px; color: white;">{GiftCardCode}</span></td>
 												</tr>
 												<tr>
-													<td style="font-style: italic;">Cette Carte-Cadeau d&#039;une valeur de {GiftCardValue}{GiftCardTax} est utilisable exclusivement sur le site <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
+													<td style="font-style: italic;">Dieser Gutschein ist {GiftCardValue}{GiftCardTax} wert und nur einlösbar bei <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>
 												</tr>
 												<tr>
-													<td style="font-style: italic;">Valable jusqu&#039;au {GiftCardDate}.</td>
+													<td style="font-style: italic;">Gültig bis {GiftCardDate}.</td>
 												</tr>
 												</table>
 											</td>									
@@ -47,10 +47,10 @@
 								</td>
 							</tr>
 							<tr>
-								<td align="left">Vous pouvez acc&eacute;der au suivi de votre commande et t&eacute;l&eacute;charger votre facture dans <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{history_url}">"Historique des commandes"</a> de la rubrique <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{my_account_url}">"Mon compte"</a> sur notre site.</td>
+								<td align="left"><span> Sie können diese Bestellung ansehen und Ihre Rechnung aus dem <a href="{history_url}" style="color:#337ff1;">"Bestellverlauf"</a> Ihres Kontos downloaden, indem Sie auf unserer Webseite auf <a href="{my_account_url}" style="color:#337ff1;">"Mein Konto"</a> klicken. </span></td>
 							</tr>
 							<tr>
-								<td align="left">Si vous avez un compte invit&eacute;, vous pouvez suivre votre commande dans la section <a style="color: {color}; font-weight: bold; text-decoration: none;" href="{guest_tracking_url}">"Suivi invit&eacute;"</a> de notre site.</td>
+								<td align="left"><span> Wenn Sie ein Gast-Konto haben, können Sie Ihre Bestellung im Abschnitt <a href="{guest_tracking_url}?id_order={order_name}" style="color:#337ff1;">"Bestellverfolgung Gast"</a> auf unserer Webseite verfolgen. </span> </span></td>
 							</tr>
 							<tr>
 								<td style="font-size: 10px; border-top: 1px solid #D9DADE;" align="center"><a style="color: {color}; font-weight: bold; text-decoration: none;" href="{shop_url}">{shop_name}</a></td>

@@ -1,0 +1,5 @@
+Hello, 
+
+{message_error}
+
+{shop_name} - {shop_url}

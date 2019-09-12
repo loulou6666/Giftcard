@@ -1,0 +1,15 @@
+{GiftCardDesc}
+
+Hallo {firstname} {lastname}, 
+
+Anbei finden Sie einen Geschenkgutschein von {from}
+  
+{GiftCardConditions}
+
+{GiftCardDatas}
+
+Code: {GiftCardCode} 
+Dieser Gutschein ist nur einlösbar bei {shop_name}. 
+Gültig bis {GiftCardDate}.
+
+{shop_name} - {shop_url}
